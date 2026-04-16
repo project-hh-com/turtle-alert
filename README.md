@@ -2,6 +2,30 @@
 
 > "어휴~ 거북이되겠다~" 잔소리형 자세 교정 알림 앱 (macOS 메뉴바 상주)
 
+## 📥 다운로드
+
+**사용자라면 👉 [DOWNLOAD.md](./DOWNLOAD.md)** 에서 설치 가이드를 확인하세요.
+
+| 칩 | 바로 다운로드 |
+|---|---|
+| 🍎 Apple Silicon (M1/M2/M3/M4) | [거북이경보-AppleSilicon.dmg](https://github.com/project-hh-com/turtle-alert/releases/latest/download/%EA%B1%B0%EB%B6%81%EC%9D%B4%EA%B2%BD%EB%B3%B4-AppleSilicon.dmg) |
+| 💻 Intel Mac | [거북이경보-Intel.dmg](https://github.com/project-hh-com/turtle-alert/releases/latest/download/%EA%B1%B0%EB%B6%81%EC%9D%B4%EA%B2%BD%EB%B3%B4-Intel.dmg) |
+
+📦 [전체 릴리즈 보기](https://github.com/project-hh-com/turtle-alert/releases/latest)
+
+## 📑 목차
+
+- [1. 개요](#1-개요)
+- [2. 주요 기능](#2-주요-기능)
+  - [2-1. 자세 교정 알림](#2-1-자세-교정-알림)
+  - [2-2. 메뉴바 UI](#2-2-메뉴바-ui)
+  - [2-3. 데이터 영구 저장](#2-3-데이터-영구-저장)
+- [3. 스트레칭 종류](#3-스트레칭-종류)
+- [4. 파일 구조](#4-파일-구조)
+- [5. 기술 스택](#5-기술-스택)
+- [6. 개발 히스토리](#6-개발-히스토리)
+- [7. 빌드 & 배포](#7-빌드--배포)
+
 ---
 
 ## 1. 개요
@@ -13,7 +37,9 @@
 | **플랫폼** | macOS (Electron) |
 | **타입** | 메뉴바 상주 앱 (창 없음, Dock 숨김) |
 | **설치 위치** | `/Applications/거북이경보.app` |
-| **실행 스크립트** | `pnpm dev:turtle-alert` |
+| **실행 스크립트** | `pnpm dev` |
+| **저장소** | [project-hh-com/turtle-alert](https://github.com/project-hh-com/turtle-alert) |
+| **이슈/건의** | [GitHub Issues](https://github.com/project-hh-com/turtle-alert/issues) |
 
 ---
 
@@ -96,19 +122,27 @@ turtle-alert/
 
 ### 개발 실행
 ```bash
-pnpm dev:turtle-alert
+pnpm install
+pnpm dev
 ```
 
 ### macOS 앱 빌드
+
+**칩셋별 개별 빌드 (용량 ↓)**
 ```bash
-cd turtle-alert
-npx electron-builder --mac --publish never
+npx electron-builder --mac --x64 --arm64 --publish never
+```
+
+**유니버설 빌드 (한 파일로 통합, 용량 ↑)**
+```bash
+npx electron-builder --mac --universal --publish never
 ```
 
 빌드 결과:
-- `dist/mac-arm64/거북이경보.app` — 실행 가능한 앱 번들
-- `dist/거북이경보-0.1.0-arm64.dmg` — DMG 설치 파일
-- `dist/거북이경보-0.1.0-arm64-mac.zip` — 압축 파일
+- `dist/mac-arm64/거북이경보.app` — Apple Silicon용 앱
+- `dist/mac/거북이경보.app` — Intel용 앱
+- `dist/거북이경보-0.1.0-arm64.dmg` — Apple Silicon DMG (93MB)
+- `dist/거북이경보-0.1.0.dmg` — Intel DMG (100MB)
 
 ### 응용 프로그램에 설치
 ```bash
@@ -116,6 +150,14 @@ cp -R "dist/mac-arm64/거북이경보.app" /Applications/
 ```
 
 Spotlight(Cmd+Space)에서 **"거북이경보"** 검색 후 실행.
+
+### GitHub Release 업로드
+```bash
+gh release create v0.1.0 \
+  "dist/거북이경보-0.1.0-arm64.dmg#거북이경보-AppleSilicon.dmg" \
+  "dist/거북이경보-0.1.0.dmg#거북이경보-Intel.dmg" \
+  --title "거북이경보 v0.1.0" --notes "릴리즈 노트"
+```
 
 ---
 
