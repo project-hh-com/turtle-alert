@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#4CAF50"/>
+  <circle cx="256" cy="256" r="230" fill="#66BB6A"/>
+
+  <!-- Shell -->
+  <ellipse cx="256" cy="280" rx="120" ry="100" fill="#8D6E63"/>
+  <ellipse cx="256" cy="280" rx="110" ry="90" fill="#A1887F"/>
+  <!-- Shell pattern -->
+  <path d="M256 190 L256 370" stroke="#8D6E63" stroke-width="6" fill="none"/>
+  <path d="M170 250 Q256 300 342 250" stroke="#8D6E63" stroke-width="5" fill="none"/>
+  <path d="M160 310 Q256 270 352 310" stroke="#8D6E63" stroke-width="5" fill="none"/>
+
+  <!-- Head -->
+  <circle cx="256" cy="185" r="50" fill="#81C784"/>
+  <!-- Eyes -->
+  <circle cx="238" cy="175" r="10" fill="white"/>
+  <circle cx="274" cy="175" r="10" fill="white"/>
+  <circle cx="240" cy="176" r="5" fill="#333"/>
+  <circle cx="276" cy="176" r="5" fill="#333"/>
+  <!-- Smile -->
+  <path d="M240 195 Q256 210 272 195" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Blush -->
+  <ellipse cx="228" cy="192" rx="10" ry="6" fill="#F48FB1" opacity="0.5"/>
+  <ellipse cx="284" cy="192" rx="10" ry="6" fill="#F48FB1" opacity="0.5"/>
+
+  <!-- Legs -->
+  <ellipse cx="170" cy="340" rx="25" ry="15" fill="#81C784" transform="rotate(-20 170 340)"/>
+  <ellipse cx="342" cy="340" rx="25" ry="15" fill="#81C784" transform="rotate(20 342 340)"/>
+  <ellipse cx="180" cy="230" rx="22" ry="13" fill="#81C784" transform="rotate(-30 180 230)"/>
+  <ellipse cx="332" cy="230" rx="22" ry="13" fill="#81C784" transform="rotate(30 332 230)"/>
+
+  <!-- Tail -->
+  <ellipse cx="256" cy="380" rx="12" ry="8" fill="#81C784"/>
+
+  <!-- Alert siren -->
+  <circle cx="380" cy="140" r="55" fill="#F44336"/>
+  <circle cx="380" cy="140" r="42" fill="#EF5350"/>
+  <text x="380" y="158" text-anchor="middle" font-size="50" font-weight="bold" fill="white">!</text>
+</svg>
