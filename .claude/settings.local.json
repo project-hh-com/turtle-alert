@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"^\\(/main\\\\.js|/package\\\\.json|/node_modules/electron-store\\)$\")",
+      "Bash(\"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app/Contents/MacOS/거북이경보\")",
+      "Bash(log show:*)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(codesign -dv --verbose=4 \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app\")",
+      "Bash(codesign --verify --deep --strict --verbose=2 \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app\")",
+      "Bash(xattr -l \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app\")",
+      "Bash(grep -E '\"version\"' echo \"---\" sw_vers echo \"---\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(codesign:*)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app/Contents/MacOS/거북이경보\")",
+      "Bash(open -W \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app\")",
+      "Bash(open \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app\")",
+      "Bash(\"/Users/hwangdahee/development/turtle-alert/node_modules/.pnpm/electron@33.4.11/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron\" --version)",
+      "Bash(/usr/libexec/PlistBuddy -c \"Print\" \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app/Contents/Info.plist\")",
+      "Bash(ELECTRON_DISABLE_SANDBOX=1 \"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app/Contents/MacOS/거북이경보\" --no-sandbox)",
+      "Bash(\"/Users/hwangdahee/development/turtle-alert/dist/mac-arm64/거북이경보.app/Contents/MacOS/거북이경보\" --js-flags=\"--no-opt --no-lazy\")",
+      "Bash(ls -t ~/Library/Logs/DiagnosticReports/거북이경보*.ips)",
+      "Bash(kill %1)",
+      "Bash(node:*)",
+      "Bash(pkill -f \"electron \\\\.\")",
+      "Bash(pkill -f \"거북이경보\")"
+    ]
+  }
+}
