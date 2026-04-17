@@ -6,7 +6,10 @@ import os from "os";
 const {
   captureSnapshot,
   cleanOldSnapshots,
+  getSnapshotFolderSize,
+  checkImagesnap,
   createAppCore,
+  SNAPSHOT_CONSECUTIVE_FAIL_LIMIT,
 } = await import("../lib.js");
 
 // ===== captureSnapshot =====
@@ -255,6 +258,25 @@ describe("tray menu snapshot items", () => {
     const item = tpl.find((i) => i.label?.includes("스냅샷 폴더"));
     expect(item).toBeDefined();
     expect(item.click).toBeTypeOf("function");
+  });
+
+  it("should reset snapshotFailCount when toggling snapshot on", () => {
+    storeData.snapshotEnabled = true;
+    core.setState({ imagesnapAvailable: true, snapshotFailCount: 2 });
+    const tpl = getTemplate();
+    const item = tpl.find(
+      (i) => i.type === "checkbox" && i.label?.includes("스냅샷")
+    );
+    // toggle off then on
+    item.click(); // off
+    expect(storeData.snapshotEnabled).toBe(false);
+    const tpl2 = getTemplate();
+    const item2 = tpl2.find(
+      (i) => i.type === "checkbox" && i.label?.includes("스냅샷")
+    );
+    item2.click(); // on
+    expect(storeData.snapshotEnabled).toBe(true);
+    expect(core.getState().snapshotFailCount).toBe(0);
   });
 
   it("should disable snapshot toggle when imagesnap unavailable", () => {
