@@ -3,3 +3,6 @@ dist/
 .next/
 .DS_Store
 *.log
+coverage/
+.agent/
+.claude/

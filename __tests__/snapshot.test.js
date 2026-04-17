@@ -298,3 +298,134 @@ describe("tray menu snapshot items", () => {
     expect(item.label).toContain("📸");
   });
 });
+
+// ===== getSnapshotFolderSize =====
+describe("getSnapshotFolderSize", () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "turtle-size-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("should return 0 for nonexistent directory", () => {
+    expect(getSnapshotFolderSize("/nonexistent-xyz-999")).toBe(0);
+  });
+
+  it("should return 0 for empty directory", () => {
+    expect(getSnapshotFolderSize(tmpDir)).toBe(0);
+  });
+
+  it("should sum only turtle jpg files", () => {
+    fs.writeFileSync(path.join(tmpDir, "거북이-a.jpg"), "12345"); // 5 bytes
+    fs.writeFileSync(path.join(tmpDir, "거북이-b.jpg"), "123");   // 3 bytes
+    fs.writeFileSync(path.join(tmpDir, "other.txt"), "ignored");
+    expect(getSnapshotFolderSize(tmpDir)).toBe(8);
+  });
+
+  it("should ignore non-turtle files", () => {
+    fs.writeFileSync(path.join(tmpDir, "photo.jpg"), "12345");
+    fs.writeFileSync(path.join(tmpDir, ".DS_Store"), "x");
+    expect(getSnapshotFolderSize(tmpDir)).toBe(0);
+  });
+});
+
+// ===== snapshot failure auto-disable =====
+describe("snapshot failure auto-disable", () => {
+  let core, mockNotification, mockStore, storeData, mockTray, captureModule;
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-17T10:00:00"));
+
+    mockNotification = vi.fn(function () {
+      this.show = vi.fn();
+    });
+    const mockMenu = { buildFromTemplate: vi.fn((t) => t) };
+    const mockApp = { quit: vi.fn(), setLoginItemSettings: vi.fn() };
+    storeData = {
+      intervalMin: 30,
+      alertCount: 0,
+      lastResetDate: new Date("2026-04-17").toDateString(),
+      autoStart: false,
+      soundEnabled: true,
+      snapshotEnabled: true,
+      snapshotSavePath: "/tmp/test-snapshots",
+      snapshotRetentionDays: 30,
+    };
+    mockStore = {
+      get: vi.fn((k) => storeData[k]),
+      set: vi.fn((k, v) => { storeData[k] = v; }),
+    };
+    mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() };
+
+    // Mock captureSnapshot to fail
+    const libModule = await import("../lib.js");
+    captureModule = libModule;
+
+    core = libModule.createAppCore({
+      Notification: mockNotification,
+      Menu: mockMenu,
+      app: mockApp,
+      store: mockStore,
+    });
+    core.setState({ tray: mockTray });
+  });
+
+  afterEach(() => {
+    const state = core.getState();
+    if (state.timer) clearInterval(state.timer);
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("should auto-disable snapshot after 3 consecutive failures", async () => {
+    // Mock captureSnapshot to reject
+    const { captureSnapshot: origCapture } = await import("../lib.js");
+    vi.spyOn(await import("../lib.js"), "captureSnapshot").mockImplementation(
+      () => Promise.reject(new Error("camera fail"))
+    );
+
+    // Unfortunately captureSnapshot is called directly inside createAppCore closure,
+    // so we need to test via the module-level mock. Let's use child_process mock instead.
+    vi.restoreAllMocks();
+
+    // The snapshot logic uses captureSnapshot which calls execFile("imagesnap")
+    // Since imagesnap isn't installed, captureSnapshot will reject
+    // We need snapshotEnabled = true and send 3 alerts
+    storeData.snapshotEnabled = true;
+    core.setState({ snapshotFailCount: 0 });
+
+    core.sendAlert();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(core.getState().snapshotFailCount).toBe(1);
+
+    core.sendAlert();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(core.getState().snapshotFailCount).toBe(2);
+
+    core.sendAlert();
+    await vi.advanceTimersByTimeAsync(100);
+    // After 3rd failure, should auto-disable
+    expect(storeData.snapshotEnabled).toBe(false);
+    expect(core.getState().snapshotFailCount).toBe(0);
+  });
+
+  it("should show disable notification after auto-disable", async () => {
+    storeData.snapshotEnabled = true;
+    core.setState({ snapshotFailCount: 2 });
+
+    core.sendAlert();
+    await vi.advanceTimersByTimeAsync(100);
+
+    // Find the disable notification
+    const disableCall = mockNotification.mock.calls.find(
+      (c) => c[0].title === "📸 스냅샷 자동 비활성화"
+    );
+    expect(disableCall).toBeDefined();
+    expect(disableCall[0].body).toContain("연속 3회");
+  });
+});
