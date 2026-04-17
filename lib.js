@@ -41,6 +41,92 @@ const STRETCHES = [
   },
 ];
 
+const path = require("path");
+const fs = require("fs");
+const { execFile } = require("child_process");
+
+const SNAPSHOT_CONSECUTIVE_FAIL_LIMIT = 3;
+
+/**
+ * imagesnap 바이너리 사용 가능 여부를 확인합니다.
+ * @returns {Promise<boolean>}
+ */
+function checkImagesnap() {
+  return new Promise((resolve) => {
+    execFile("which", ["imagesnap"], (err) => {
+      resolve(!err);
+    });
+  });
+}
+
+/**
+ * 노트북 카메라로 스냅샷을 촬영하여 지정 경로에 저장합니다.
+ * @param {string} savePath - 저장 폴더 경로
+ * @returns {Promise<string>} 저장된 파일 경로
+ */
+function captureSnapshot(savePath) {
+  fs.mkdirSync(savePath, { recursive: true });
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `거북이-${timestamp}.jpg`;
+  const filepath = path.join(savePath, filename);
+
+  return new Promise((resolve, reject) => {
+    execFile("imagesnap", ["-q", filepath], (err) => {
+      if (err) return reject(err);
+      resolve(filepath);
+    });
+  });
+}
+
+/**
+ * 보관 기간이 지난 스냅샷 파일을 삭제합니다.
+ * @param {string} savePath - 스냅샷 폴더 경로
+ * @param {number} retentionDays - 보관 기간 (일)
+ * @returns {number} 삭제된 파일 수
+ */
+function cleanOldSnapshots(savePath, retentionDays) {
+  if (!fs.existsSync(savePath)) return 0;
+
+  const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+  let deleted = 0;
+
+  const files = fs.readdirSync(savePath);
+  for (const file of files) {
+    if (!file.startsWith("거북이-") || !file.endsWith(".jpg")) continue;
+    const filepath = path.join(savePath, file);
+    try {
+      const stat = fs.statSync(filepath);
+      if (stat.mtimeMs < cutoff) {
+        fs.unlinkSync(filepath);
+        deleted++;
+      }
+    } catch {
+      // 파일 접근 실패 시 건너뜀
+    }
+  }
+
+  return deleted;
+}
+
+/**
+ * 스냅샷 폴더의 총 용량을 바이트 단위로 계산합니다.
+ * @param {string} savePath - 스냅샷 폴더 경로
+ * @returns {number} 총 바이트
+ */
+function getSnapshotFolderSize(savePath) {
+  if (!fs.existsSync(savePath)) return 0;
+
+  let total = 0;
+  const files = fs.readdirSync(savePath);
+  for (const file of files) {
+    if (!file.startsWith("거북이-") || !file.endsWith(".jpg")) continue;
+    const stat = fs.statSync(path.join(savePath, file));
+    total += stat.size;
+  }
+  return total;
+}
+
 function pickRandomStretch() {
   return STRETCHES[Math.floor(Math.random() * STRETCHES.length)];
 }
@@ -63,13 +149,20 @@ function resetDailyCount(store) {
  * 앱 코어 로직 팩토리 — Electron 의존성을 주입받아 테스트 가능하게 만듦
  */
 function createAppCore(deps) {
-  const { Notification, Menu, app, store } = deps;
+  const { Notification, Menu, app, store, shell } = deps;
 
   let tray = null;
   let timer = null;
   let remainSec = 0;
   let isRunning = false;
   let nextAlertTime = 0;
+  let snapshotFailCount = 0;
+  let imagesnapAvailable = false;
+
+  // 앱 시작 시 imagesnap 존재 여부 확인
+  checkImagesnap().then((available) => {
+    imagesnapAvailable = available;
+  });
 
   function sendAlert() {
     const stretch = pickRandomStretch();
@@ -85,6 +178,30 @@ function createAppCore(deps) {
     });
 
     notification.show();
+
+    // 스냅샷 촬영 (fire-and-forget)
+    if (store.get("snapshotEnabled")) {
+      const savePath = store.get("snapshotSavePath");
+      captureSnapshot(savePath)
+        .then(() => {
+          snapshotFailCount = 0;
+        })
+        .catch(() => {
+          snapshotFailCount++;
+          if (snapshotFailCount >= SNAPSHOT_CONSECUTIVE_FAIL_LIMIT) {
+            store.set("snapshotEnabled", false);
+            snapshotFailCount = 0;
+            const failNotice = new Notification({
+              title: "📸 스냅샷 자동 비활성화",
+              body: "연속 3회 촬영 실패로 자세 스냅샷을 껐습니다.",
+              silent: true,
+            });
+            failNotice.show();
+            updateTrayMenu();
+          }
+        });
+    }
+
     updateTrayMenu();
   }
 
@@ -218,6 +335,30 @@ function createAppCore(deps) {
         },
       },
       {
+        label: imagesnapAvailable
+          ? `자세 스냅샷 (카메라)${store.get("snapshotEnabled") ? " 📸" : ""}`
+          : "자세 스냅샷 (imagesnap 필요)",
+        type: "checkbox",
+        checked: store.get("snapshotEnabled"),
+        enabled: imagesnapAvailable,
+        click: () => {
+          const willEnable = !store.get("snapshotEnabled");
+          store.set("snapshotEnabled", willEnable);
+          if (willEnable) {
+            snapshotFailCount = 0;
+          }
+          updateTrayMenu();
+        },
+      },
+      {
+        label: "  📂 스냅샷 폴더 열기",
+        click: () => {
+          const savePath = store.get("snapshotSavePath");
+          fs.mkdirSync(savePath, { recursive: true });
+          if (shell) shell.openPath(savePath);
+        },
+      },
+      {
         label: "로그인 시 자동 실행",
         type: "checkbox",
         checked: autoStart,
@@ -263,13 +404,15 @@ function createAppCore(deps) {
     stopTimer,
     updateTrayMenu,
     handleResume,
-    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime }),
+    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount }),
     setState: (state) => {
       if ("timer" in state) timer = state.timer;
       if ("remainSec" in state) remainSec = state.remainSec;
       if ("isRunning" in state) isRunning = state.isRunning;
       if ("tray" in state) tray = state.tray;
       if ("nextAlertTime" in state) nextAlertTime = state.nextAlertTime;
+      if ("imagesnapAvailable" in state) imagesnapAvailable = state.imagesnapAvailable;
+      if ("snapshotFailCount" in state) snapshotFailCount = state.snapshotFailCount;
     },
   };
 }
@@ -280,4 +423,9 @@ module.exports = {
   formatTime,
   resetDailyCount,
   createAppCore,
+  captureSnapshot,
+  cleanOldSnapshots,
+  getSnapshotFolderSize,
+  checkImagesnap,
+  SNAPSHOT_CONSECUTIVE_FAIL_LIMIT,
 };

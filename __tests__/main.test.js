@@ -105,7 +105,7 @@ describe("resetDailyCount", () => {
 
 // ===== createAppCore =====
 describe("createAppCore", () => {
-  let core, mockNotification, mockStore, storeData, mockApp, mockMenu;
+  let core, mockNotification, mockStore, storeData, mockApp, mockMenu, mockShell;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -113,9 +113,10 @@ describe("createAppCore", () => {
     mockNotification = vi.fn(function() { this.show = vi.fn(); });
     mockMenu = { buildFromTemplate: vi.fn((t) => t) };
     mockApp = { quit: vi.fn(), setLoginItemSettings: vi.fn() };
-    storeData = { intervalMin: 30, alertCount: 0, lastResetDate: new Date("2026-04-17").toDateString(), autoStart: false, soundEnabled: true };
+    mockShell = { openPath: vi.fn() };
+    storeData = { intervalMin: 30, alertCount: 0, lastResetDate: new Date("2026-04-17").toDateString(), autoStart: false, soundEnabled: true, snapshotEnabled: false, snapshotSavePath: "/tmp/test-snap" };
     mockStore = { get: vi.fn((k) => storeData[k]), set: vi.fn((k, v) => { storeData[k] = v; }) };
-    core = createAppCore({ Notification: mockNotification, Menu: mockMenu, app: mockApp, store: mockStore });
+    core = createAppCore({ Notification: mockNotification, Menu: mockMenu, app: mockApp, store: mockStore, shell: mockShell });
   });
 
   afterEach(() => {
@@ -340,6 +341,11 @@ describe("createAppCore", () => {
     it("should start on click", () => { core.setState({ tray: mockTray, isRunning: false }); storeData.intervalMin = 15; getTemplate().find((i) => i.label === "시작").click(); expect(core.getState().isRunning).toBe(true); });
     it("should stop on click", () => { core.startTimer(30); getTemplate().find((i) => i.label === "중지").click(); expect(core.getState().isRunning).toBe(false); });
     it("should start with submenu interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "45분").click(); expect(storeData.intervalMin).toBe(45); });
+    it("should start with 15min interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "15분").click(); expect(storeData.intervalMin).toBe(15); });
+    it("should start with 30min interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "30분").click(); expect(storeData.intervalMin).toBe(30); });
+    it("should start with 1hour interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "1시간").click(); expect(storeData.intervalMin).toBe(60); });
+    it("should toggle snapshot", () => { storeData.snapshotEnabled = false; core.setState({ tray: mockTray, imagesnapAvailable: true }); getTemplate().find((i) => i.label?.includes("자세 스냅샷")).click(); expect(storeData.snapshotEnabled).toBe(true); });
+    it("should open snapshot folder", () => { storeData.snapshotSavePath = "/tmp/test-snap"; getTemplate().find((i) => i.label?.includes("스냅샷 폴더")).click(); expect(mockShell.openPath).toHaveBeenCalledWith("/tmp/test-snap"); });
   });
 
   describe("handleResume", () => {

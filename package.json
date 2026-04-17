@@ -1,6 +1,6 @@
 {
   "name": "turtle-alert",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -9,12 +9,15 @@
     "dist": "electron-builder --mac --publish never",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint --max-warnings 0 ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.4",
-    "electron": "^33.0.0",
-    "electron-builder": "^25.1.8",
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1",
+    "eslint": "^10.2.0",
     "vitest": "^4.1.4"
   },
   "build": {
@@ -23,13 +26,19 @@
     "mac": {
       "category": "public.app-category.healthcare-fitness",
       "icon": "assets/icon.png",
-      "identity": null
+      "identity": null,
+      "extendInfo": {
+        "NSCameraUsageDescription": "자세 스냅샷 촬영을 위해 카메라 접근 권한이 필요합니다."
+      }
     },
     "files": [
       "main.js",
       "lib.js",
       "assets/"
     ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["electron"]
   },
   "dependencies": {
     "electron-store": "^7.0.3"
