@@ -1,29 +1,37 @@
 {
   "name": "turtle-alert",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "main": "main.js",
   "scripts": {
     "dev": "electron .",
     "build": "electron-builder --mac",
-    "dist": "electron-builder --mac --publish never"
-  },
-  "dependencies": {
-    "electron-store": "^8.2.0"
+    "dist": "electron-builder --mac --publish never",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.4",
     "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "vitest": "^4.1.4"
   },
   "build": {
     "appId": "com.turtle-alert.app",
     "productName": "거북이경보",
     "mac": {
       "category": "public.app-category.healthcare-fitness",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "identity": null
     },
     "files": [
-      "main.js"
+      "main.js",
+      "lib.js",
+      "assets/"
     ]
+  },
+  "dependencies": {
+    "electron-store": "^7.0.3"
   }
 }
