@@ -38,8 +38,10 @@ uname -m
 
 | 파일 | 크기 | 대상 |
 |---|---|---|
-| 🍎 [**거북이경보-AppleSilicon.dmg**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/%EA%B1%B0%EB%B6%81%EC%9D%B4%EA%B2%BD%EB%B3%B4-AppleSilicon.dmg) | 93MB | Apple Silicon (M1/M2/M3/M4) |
-| 💻 [**거북이경보-Intel.dmg**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/%EA%B1%B0%EB%B6%81%EC%9D%B4%EA%B2%BD%EB%B3%B4-Intel.dmg) | 100MB | Intel Mac |
+| 🍎 [**Apple Silicon용 다운로드**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1-arm64.dmg) | 109MB | Apple Silicon (M1/M2/M3/M4) |
+| 💻 [**Intel용 다운로드**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1.dmg) | 114MB | Intel Mac |
+
+설치 후 앱 이름은 **거북이경보** 로 표시됩니다 (파일명만 영문).
 
 ---
 
