@@ -4,79 +4,57 @@
 
 ---
 
-## 1. 내 Mac 칩셋 확인하기
+## 📦 설치 방법 — 두 가지 중 하나
 
-다운로드 전에 **내 Mac이 어떤 칩을 쓰는지** 먼저 확인해주세요.
+### ✅ 방법 1. Homebrew 로 설치 (권장)
 
-### 방법 1. Apple 메뉴에서 확인
-
-1. 화면 왼쪽 위 **🍎 Apple 메뉴** 클릭
-2. **"이 Mac에 관하여"** 선택
-3. **"칩"** 또는 **"프로세서"** 항목 확인
-
-| 표시 내용 | 칩 종류 | 다운로드할 파일 |
-|---|---|---|
-| **Apple M1 / M2 / M3 / M4** | Apple Silicon | `거북이경보-AppleSilicon.dmg` |
-| **Intel Core i5 / i7 / i9 등** | Intel | `거북이경보-Intel.dmg` |
-
-### 방법 2. 터미널에서 확인
+터미널에 익숙하다면 **이게 가장 간편**합니다. 칩셋 자동 인식 + Gatekeeper 우회까지 한 방에 처리됩니다.
 
 ```bash
-uname -m
+brew install --cask project-hh-com/turtle-alert/turtle-alert
 ```
 
-| 출력 | 다운로드할 파일 |
-|---|---|
-| `arm64` | 🍎 `거북이경보-AppleSilicon.dmg` |
-| `x86_64` | 💻 `거북이경보-Intel.dmg` |
+제거하려면:
+```bash
+brew uninstall --cask turtle-alert
+brew uninstall --cask --zap turtle-alert  # 설정/로그까지 전부 삭제
+```
 
----
+### 📥 방법 2. DMG 직접 다운로드
 
-## 2. 다운로드 링크
-
-👉 **[GitHub Releases 페이지](https://github.com/project-hh-com/turtle-alert/releases/latest)**
+1. 아래에서 내 Mac 칩에 맞는 파일 받기:
 
 | 파일 | 크기 | 대상 |
 |---|---|---|
-| 🍎 [**Apple Silicon용 다운로드**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1-arm64.dmg) | 109MB | Apple Silicon (M1/M2/M3/M4) |
-| 💻 [**Intel용 다운로드**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1.dmg) | 114MB | Intel Mac |
+| 🍎 [**Apple Silicon**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1-arm64.dmg) | 109MB | M1/M2/M3/M4 |
+| 💻 [**Intel**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1.dmg) | 114MB | Intel Mac |
 
-설치 후 앱 이름은 **거북이경보** 로 표시됩니다 (파일명만 영문).
+터미널에서 내 칩 확인:
+```bash
+uname -m   # arm64 = Apple Silicon, x86_64 = Intel
+```
 
----
+2. DMG 더블클릭 → **거북이경보 아이콘을 Applications 폴더로 드래그**
 
-## 3. 설치 방법
+3. **⚠️ 중요**: 이 앱은 Apple Developer ID 로 서명되지 않아 Gatekeeper가 **"손상되어 열 수 없습니다"** 경고를 표시합니다. 터미널에서 아래 한 줄을 실행해 격리 속성을 제거하세요:
 
-1. 위에서 내 칩에 맞는 **DMG 파일 다운로드**
-2. 다운받은 **`.dmg` 파일을 더블클릭**
-3. 뜨는 창에서 **거북이경보 아이콘을 `Applications` 폴더로 드래그**
-4. `Launchpad` 또는 `응용 프로그램`에서 **거북이경보 실행**
+```bash
+xattr -dr com.apple.quarantine /Applications/TurtleAlert.app
+```
 
----
+이후로는 Finder 더블클릭으로 정상 실행됩니다.
 
-## 4. ⚠️ "확인되지 않은 개발자" 경고가 뜰 때
-
-코드 서명이 안 된 앱이라 처음 열 때 경고가 뜹니다.
-
-### 해결 방법 (한 번만 하면 됨)
-
-**방법 A. 우클릭으로 열기**
-1. `응용 프로그램`에서 **거북이경보 우클릭** → **"열기"** 선택
-2. 경고창에서 다시 **"열기"** 클릭
-
-**방법 B. 시스템 설정에서 허용**
-1. `시스템 설정` → `개인정보 보호 및 보안`
-2. 아래쪽 **"확인 없이 열기"** 버튼 클릭
+> 📝 `TurtleAlert.app` 은 내부 번들 이름이고, 실제로 앱을 열면 "거북이경보" 로 표시됩니다.
 
 ---
 
-## 5. 사용 방법
+## 🎯 사용 방법
 
 1. 앱 실행 시 **상단 메뉴바에 🐢 이모지** 등장
 2. **🐢 클릭** → 메뉴 표시
 3. **"시작"** 선택 → 타이머 작동 시작
 4. **"알림 간격"** 서브메뉴에서 15분 / 30분 / 45분 / 1시간 선택
-5. 설정한 시간마다 **🚨 거북이경보 발령!** 알림 표시 + 랜덤 스트레칭 가이드
+5. 설정한 시간마다 **🚨 거북이경보 발령!** 알림 + 랜덤 스트레칭 가이드
 
 ### 기능 요약
 
@@ -92,5 +70,5 @@ uname -m
 ## 📝 참고
 
 - 앱을 완전히 종료하려면: 메뉴바 🐢 클릭 → **"종료"**
-- 타이머 중지만 하려면: **"중지"** 선택 (앱은 계속 실행)
+- 타이머만 중지: **"중지"** 선택 (앱은 계속 실행)
 - 이슈/건의: [GitHub Issues](https://github.com/project-hh-com/turtle-alert/issues)
