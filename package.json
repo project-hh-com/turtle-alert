@@ -1,6 +1,6 @@
 {
   "name": "turtle-alert",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "lint": "eslint --max-warnings 0 ."
   },
   "devDependencies": {
+    "@electron/fuses": "^2.1.1",
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.4",
     "electron": "^41.2.1",
@@ -22,12 +23,14 @@
   },
   "build": {
     "appId": "com.turtle-alert.app",
-    "productName": "거북이경보",
+    "productName": "TurtleAlert",
+    "afterPack": "scripts/afterPack.js",
     "mac": {
       "category": "public.app-category.healthcare-fitness",
       "icon": "assets/icon.png",
       "identity": null,
       "extendInfo": {
+        "CFBundleDisplayName": "거북이경보",
         "NSCameraUsageDescription": "자세 스냅샷 촬영을 위해 카메라 접근 권한이 필요합니다."
       }
     },
@@ -38,7 +41,9 @@
     ]
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["electron"]
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
   },
   "dependencies": {
     "electron-store": "^7.0.3"

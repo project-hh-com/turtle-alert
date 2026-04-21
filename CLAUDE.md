@@ -85,21 +85,24 @@ pnpm dev    # electron .
 rm -rf dist
 npx electron-builder --mac --x64 --arm64 --publish never
 ```
-→ `dist/거북이경보-0.1.0-arm64.dmg` (Apple Silicon, 93MB)
-→ `dist/거북이경보-0.1.0.dmg` (Intel, 100MB)
+→ `dist/TurtleAlert-X.Y.Z-arm64.dmg` (Apple Silicon)
+→ `dist/TurtleAlert-X.Y.Z.dmg` (Intel)
+
+⚠️ `productName`은 영문(`TurtleAlert`) 고정. 한글로 바꾸면 macOS 26.2+ 에서 SIGTRAP 크래시 (상세: [CRASH_INVESTIGATION.md](CRASH_INVESTIGATION.md)). 사용자에게 보이는 이름은 `extendInfo.CFBundleDisplayName` 로 한글 유지 중.
 
 ### 5-3. GitHub Release 업로드
 ```bash
 gh release create vX.Y.Z \
-  "dist/거북이경보-X.Y.Z-arm64.dmg#거북이경보-AppleSilicon.dmg" \
-  "dist/거북이경보-X.Y.Z.dmg#거북이경보-Intel.dmg" \
+  "dist/TurtleAlert-X.Y.Z-arm64.dmg#거북이경보-AppleSilicon.dmg" \
+  "dist/TurtleAlert-X.Y.Z.dmg#거북이경보-Intel.dmg" \
   --title "거북이경보 vX.Y.Z" --notes "..."
 ```
+(업로드 시 `#` 뒤의 이름으로 rename 되므로 사용자에게는 `거북이경보-*.dmg` 로 보임)
 
 ### 5-4. 로컬 설치 (테스트용)
 ```bash
-rm -rf "/Applications/거북이경보.app"
-cp -R "dist/mac-arm64/거북이경보.app" /Applications/
+rm -rf "/Applications/TurtleAlert.app"
+cp -R "dist/mac-arm64/TurtleAlert.app" /Applications/
 ```
 
 ⚠️ 빌드 시 `Cannot cleanup: TypeError: Cannot read properties of null (reading 'provider')` 에러는 publish 설정 누락 관련으로 **무시해도 됨**. `.app`과 `.dmg`는 정상 생성됨.
