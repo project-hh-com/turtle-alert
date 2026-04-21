@@ -7,9 +7,7 @@ const {
   captureSnapshot,
   cleanOldSnapshots,
   getSnapshotFolderSize,
-  checkImagesnap,
   createAppCore,
-  SNAPSHOT_CONSECUTIVE_FAIL_LIMIT,
 } = await import("../lib.js");
 
 // ===== captureSnapshot =====
@@ -335,7 +333,7 @@ describe("getSnapshotFolderSize", () => {
 
 // ===== snapshot failure auto-disable =====
 describe("snapshot failure auto-disable", () => {
-  let core, mockNotification, mockStore, storeData, mockTray, captureModule;
+  let core, mockNotification, mockStore, storeData, mockTray;
 
   beforeEach(async () => {
     vi.useFakeTimers();
@@ -364,7 +362,6 @@ describe("snapshot failure auto-disable", () => {
 
     // Mock captureSnapshot to fail
     const libModule = await import("../lib.js");
-    captureModule = libModule;
 
     core = libModule.createAppCore({
       Notification: mockNotification,
@@ -384,7 +381,6 @@ describe("snapshot failure auto-disable", () => {
 
   it("should auto-disable snapshot after 3 consecutive failures", async () => {
     // Mock captureSnapshot to reject
-    const { captureSnapshot: origCapture } = await import("../lib.js");
     vi.spyOn(await import("../lib.js"), "captureSnapshot").mockImplementation(
       () => Promise.reject(new Error("camera fail"))
     );

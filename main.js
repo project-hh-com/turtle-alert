@@ -1,6 +1,22 @@
+// uncaughtException 핸들러는 모듈 로드 후 등록 (아래 참조)
+
+const {
+  app,
+  Tray,
+  Menu,
+  Notification,
+  nativeImage,
+  dialog,
+  powerMonitor,
+  systemPreferences,
+  shell,
+} = require("electron");
+const path = require("path");
+const Store = require("electron-store");
+const { createAppCore, cleanOldSnapshots } = require("./lib");
+
 process.on("uncaughtException", (error) => {
   try {
-    const { app, dialog } = require("electron");
     if (app.isReady()) {
       dialog.showErrorBox(
         "거북이경보 오류",
@@ -13,42 +29,42 @@ process.on("uncaughtException", (error) => {
   process.exit(1);
 });
 
-const {
-  app,
-  Tray,
-  Menu,
-  Notification,
-  nativeImage,
-  powerMonitor,
-  systemPreferences,
-} = require("electron");
-const Store = require("electron-store");
-const { createAppCore, cleanOldSnapshots } = require("./lib");
-
-const store = new Store({
-  defaults: {
-    intervalMin: 30,
-    alertCount: 0,
-    lastResetDate: new Date().toDateString(),
-    autoStart: false,
-    soundEnabled: true,
-    snapshotEnabled: false,
-    snapshotSavePath: require("path").join(app.getPath("home"), "거북이경보-스냅샷"),
-    snapshotRetentionDays: 30,
-  },
-  clearInvalidConfig: true,
-});
-
-const { shell } = require("electron");
-const core = createAppCore({ Notification, Menu, app, store, systemPreferences, shell });
+let store;
+let core;
 
 app.whenReady().then(() => {
   // 메뉴바 전용 앱 — Dock 아이콘 숨김
   app.dock?.hide();
 
-  // 1x1 투명 PNG — 실제 표시는 setTitle의 이모지로
-  const emptyIcon = nativeImage.createEmpty();
-  const tray = new Tray(emptyIcon);
+  // Store 초기화 — app.getPath()는 ready 이후에만 안전
+  store = new Store({
+    defaults: {
+      intervalMin: 30,
+      alertCount: 0,
+      lastResetDate: new Date().toDateString(),
+      autoStart: false,
+      soundEnabled: true,
+      snapshotEnabled: false,
+      snapshotSavePath: path.join(app.getPath("home"), "거북이경보-스냅샷"),
+      snapshotRetentionDays: 30,
+    },
+    clearInvalidConfig: true,
+  });
+
+  core = createAppCore({ Notification, Menu, app, store, systemPreferences, shell });
+
+  // 16x16 투명 PNG (유효한 이미지 버퍼) — 실제 표시는 setTitle의 이모지로
+  // nativeImage.createEmpty()는 Electron 41+ macOS에서 CrBrowserMain 크래시 유발
+  const TRANSPARENT_PNG = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAADklEQVQ4jWNgGAWDEwAAAhAAATnStMoAAAAASUVORK5CYII=",
+    "base64"
+  );
+  const trayIcon = nativeImage.createFromBuffer(TRANSPARENT_PNG, {
+    width: 16,
+    height: 16,
+  });
+  trayIcon.setTemplateImage(true);
+  const tray = new Tray(trayIcon);
   tray.setTitle("🐢");
   tray.setToolTip("거북이경보");
   core.setState({ tray });
