@@ -476,6 +476,18 @@ function createAppCore(deps) {
               updateTrayMenu();
             },
           },
+          { type: "separator" },
+          {
+            label: "감시 간격",
+            enabled: store.get("postureCheckEnabled") || false,
+            submenu: [
+              { label: "20초", type: "radio", checked: store.get("postureCheckInterval") === 20, click: () => { store.set("postureCheckInterval", 20); if (store.get("postureCheckEnabled")) startPostureCheck(); updateTrayMenu(); } },
+              { label: "40초", type: "radio", checked: store.get("postureCheckInterval") === 40, click: () => { store.set("postureCheckInterval", 40); if (store.get("postureCheckEnabled")) startPostureCheck(); updateTrayMenu(); } },
+              { label: "1분", type: "radio", checked: store.get("postureCheckInterval") === 60, click: () => { store.set("postureCheckInterval", 60); if (store.get("postureCheckEnabled")) startPostureCheck(); updateTrayMenu(); } },
+              { label: "2분", type: "radio", checked: store.get("postureCheckInterval") === 120, click: () => { store.set("postureCheckInterval", 120); if (store.get("postureCheckEnabled")) startPostureCheck(); updateTrayMenu(); } },
+              { label: "5분", type: "radio", checked: store.get("postureCheckInterval") === 300, click: () => { store.set("postureCheckInterval", 300); if (store.get("postureCheckEnabled")) startPostureCheck(); updateTrayMenu(); } },
+            ],
+          },
         ],
       },
       {
