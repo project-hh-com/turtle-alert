@@ -381,7 +381,7 @@ describe("createAppCore", () => {
   });
 
   describe("getState / setState", () => {
-    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); expect(s).toHaveProperty("calibrationInProgress"); expect(s).toHaveProperty("baseline"); expect(s).toHaveProperty("badPosture"); });
+    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); expect(s).toHaveProperty("badPosture"); });
     it("should update partial", () => { core.setState({ remainSec: 42, isRunning: true }); expect(core.getState().remainSec).toBe(42); expect(core.getState().isRunning).toBe(true); });
   });
 
@@ -418,18 +418,6 @@ describe("createAppCore", () => {
       expect(core.getState().postureDetectorLoading).toBe(false);
     });
 
-    it("should have calibrationInProgress=false initially", () => {
-      expect(core.getState().calibrationInProgress).toBe(false);
-    });
-
-    it("should have baseline=null initially", () => {
-      expect(core.getState().baseline).toBeNull();
-    });
-
-    it("should expose runCalibration", () => {
-      expect(core.runCalibration).toBeTypeOf("function");
-    });
-
     it("should show posture AI menu with various states", () => {
       // imagesnap 사용 불가 상태
       core.setState({ imagesnapAvailable: false });
@@ -453,23 +441,6 @@ describe("createAppCore", () => {
       expect(aiItem.label).toContain("모델 미로드");
     });
 
-    it("should show calibration menu items", () => {
-      core.setState({ imagesnapAvailable: true });
-      core.updateTrayMenu();
-      const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
-      const calItem = template.find((t) => typeof t.label === "string" && t.label.includes("기준 자세"));
-      expect(calItem).toBeDefined();
-      expect(calItem.label).toContain("기준 자세 설정");
-    });
-
-    it("should show calibration info when no baseline", () => {
-      core.setState({ imagesnapAvailable: true });
-      core.updateTrayMenu();
-      const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
-      const infoItem = template.find((t) => typeof t.label === "string" && t.label.includes("캘리브레이션"));
-      expect(infoItem).toBeDefined();
-      expect(infoItem.enabled).toBe(false);
-    });
   });
 
   describe("tray menu click handlers", () => {

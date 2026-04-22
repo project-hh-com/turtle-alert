@@ -47,11 +47,9 @@ const { execFile } = require("child_process");
 const {
   initDetector,
   captureAndAnalyze,
-  captureCalibrationFrames,
   disposeDetector,
 } = require("./lib/posture-capture");
 const {
-  calibrate,
   DEFAULT_CHECK_INTERVAL_SEC,
   CONSECUTIVE_BAD_THRESHOLD,
 } = require("./lib/posture-detector");
@@ -175,8 +173,6 @@ function createAppCore(deps) {
   let postureDetectorReady = false;
   let postureDetectorLoading = false;
   let consecutiveBadCount = 0;
-  let calibrationInProgress = false;
-  let baseline = store.get("calibrationData") || null;
 
   // 앱 시작 시 imagesnap 존재 여부 확인
   checkImagesnap().then((available) => {
@@ -461,21 +457,6 @@ function createAppCore(deps) {
         },
       },
       {
-        label: calibrationInProgress
-          ? "  📐 기준 자세 설정 중..."
-          : baseline
-            ? "  📐 기준 자세 재설정"
-            : "  📐 기준 자세 설정",
-        enabled: imagesnapAvailable && postureDetectorReady && !calibrationInProgress,
-        click: () => runCalibration(),
-      },
-      {
-        label: baseline
-          ? `    마지막 캘리브레이션: ${new Date(baseline.timestamp).toLocaleDateString()}`
-          : "    (캘리브레이션 없이도 동작하지만, 설정하면 더 정확해요)",
-        enabled: false,
-      },
-      {
         label: "  📂 스냅샷 폴더 열기",
         click: () => {
           const savePath = store.get("snapshotSavePath");
@@ -561,57 +542,6 @@ function createAppCore(deps) {
     updateTrayMenu();
   }
 
-  async function runCalibration() {
-    if (calibrationInProgress || !postureDetectorReady) return;
-    calibrationInProgress = true;
-    updateTrayMenu();
-
-    const prepNotice = new Notification({
-      title: "📐 기준 자세 설정",
-      body: "바른 자세로 앉아주세요. 3초 후 기준 자세를 기록합니다.",
-      silent: false,
-      urgency: "critical",
-    });
-    prepNotice.show();
-
-    await new Promise((r) => setTimeout(r, 3000));
-
-    try {
-      const frames = await captureCalibrationFrames();
-      const result = calibrate(frames);
-      if (result) {
-        baseline = result;
-        store.set("calibrationData", result);
-        const doneNotice = new Notification({
-          title: "✅ 기준 자세 설정 완료!",
-          body: "기준 자세가 저장되었습니다. 이제 더 정확하게 자세를 감시합니다.",
-          silent: false,
-          urgency: "critical",
-        });
-        doneNotice.show();
-      } else {
-        const failNotice = new Notification({
-          title: "❌ 기준 자세 설정 실패",
-          body: "카메라에서 자세를 인식하지 못했습니다. 카메라 앞에서 다시 시도해주세요.",
-          silent: false,
-          urgency: "critical",
-        });
-        failNotice.show();
-      }
-    } catch {
-      const failNotice = new Notification({
-        title: "❌ 기준 자세 설정 실패",
-        body: "촬영 중 오류가 발생했습니다. 다시 시도해주세요.",
-        silent: false,
-        urgency: "critical",
-      });
-      failNotice.show();
-    }
-
-    calibrationInProgress = false;
-    updateTrayMenu();
-  }
-
   function sendPostureAlert(issues) {
     const soundEnabled = store.get("soundEnabled");
     const firstIssue = issues[0];
@@ -636,7 +566,7 @@ function createAppCore(deps) {
     if (!postureDetectorReady) return;
 
     try {
-      const result = await captureAndAnalyze(baseline);
+      const result = await captureAndAnalyze();
       const isActuallyBad = !result.isGood && result.issues.length > 0 && !result.issues.includes("키포인트 신뢰도 부족");
       const isUncertain = result.issues.includes("키포인트 신뢰도 부족") || result.issues.includes("포즈를 감지하지 못했습니다") || result.issues.includes("어깨 간격이 너무 좁습니다");
 
@@ -697,10 +627,9 @@ function createAppCore(deps) {
     loadPostureDetector,
     startPostureCheck,
     stopPostureCheck,
-    runCalibration,
     setPostureBad,
     setPostureGood,
-    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading, calibrationInProgress, baseline, badPosture }),
+    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading, badPosture }),
     setState: (state) => {
       if ("timer" in state) timer = state.timer;
       if ("remainSec" in state) remainSec = state.remainSec;
