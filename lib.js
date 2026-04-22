@@ -421,39 +421,52 @@ function createAppCore(deps) {
       },
       { type: "separator" },
       {
-        label: postureDetectorLoading
-          ? "자세 감시 AI (모델 로딩 중...)"
-          : !imagesnapAvailable
-            ? "자세 감시 AI (imagesnap 필요)"
-            : !postureDetectorReady
-              ? "자세 감시 AI (모델 미로드)"
-              : `자세 감시 AI${store.get("postureCheckEnabled") ? " 🤖" : ""}`,
-        type: "checkbox",
-        checked: store.get("postureCheckEnabled") || false,
-        enabled: imagesnapAvailable && !postureDetectorLoading,
-        click: () => {
-          const willEnable = !store.get("postureCheckEnabled");
-          store.set("postureCheckEnabled", willEnable);
-          if (willEnable) {
-            loadPostureDetector().then(() => {
-              if (postureDetectorReady) {
-                startPostureCheck();
-              } else {
+        label: "감시 모드",
+        submenu: [
+          {
+            label: "⏰ 알림만 (타이머)",
+            type: "radio",
+            checked: !store.get("postureCheckEnabled"),
+            click: () => {
+              if (store.get("postureCheckEnabled")) {
                 store.set("postureCheckEnabled", false);
-                const failNotice = new Notification({
-                  title: "🤖 자세 감시 AI 로드 실패",
-                  body: "TensorFlow.js 모델을 불러올 수 없습니다. 의존성을 확인해주세요.",
-                  silent: true,
+                stopPostureCheck();
+                if (badPosture) setPostureGood();
+                updateTrayMenu();
+              }
+            },
+          },
+          {
+            label: postureDetectorLoading
+              ? "🤖 AI 자세 검사 (모델 로딩 중...)"
+              : !imagesnapAvailable
+                ? "🤖 AI 자세 검사 (imagesnap 필요)"
+                : "🤖 AI 자세 검사 (알림 + 카메라)",
+            type: "radio",
+            checked: store.get("postureCheckEnabled") || false,
+            enabled: imagesnapAvailable && !postureDetectorLoading,
+            click: () => {
+              if (!store.get("postureCheckEnabled")) {
+                store.set("postureCheckEnabled", true);
+                loadPostureDetector().then(() => {
+                  if (postureDetectorReady) {
+                    startPostureCheck();
+                  } else {
+                    store.set("postureCheckEnabled", false);
+                    const failNotice = new Notification({
+                      title: "🤖 자세 감시 AI 로드 실패",
+                      body: "TensorFlow.js 모델을 불러올 수 없습니다. 의존성을 확인해주세요.",
+                      silent: true,
+                    });
+                    failNotice.show();
+                  }
+                  updateTrayMenu();
                 });
-                failNotice.show();
               }
               updateTrayMenu();
-            });
-          } else {
-            stopPostureCheck();
-          }
-          updateTrayMenu();
-        },
+            },
+          },
+        ],
       },
       {
         label: "  📂 스냅샷 폴더 열기",

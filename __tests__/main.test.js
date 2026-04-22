@@ -418,27 +418,25 @@ describe("createAppCore", () => {
       expect(core.getState().postureDetectorLoading).toBe(false);
     });
 
-    it("should show posture AI menu with various states", () => {
-      // imagesnap 사용 불가 상태
-      core.setState({ imagesnapAvailable: false });
-      core.updateTrayMenu();
-      let template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
-      let aiItem = template.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
-      expect(aiItem.label).toContain("imagesnap 필요");
-
-      // imagesnap 가능, 모델 미로드
+    it("should show monitoring mode submenu", () => {
       core.setState({ imagesnapAvailable: true });
       core.updateTrayMenu();
-      template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
-      aiItem = template.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
-      expect(aiItem.label).toContain("모델 미로드");
+      const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      const modeItem = template.find((t) => t.label === "감시 모드");
+      expect(modeItem).toBeDefined();
+      expect(modeItem.submenu).toHaveLength(2);
+      expect(modeItem.submenu[0].label).toContain("알림만");
+      expect(modeItem.submenu[1].label).toContain("AI 자세 검사");
+    });
 
-      // postureCheckEnabled 활성화 (모델 미로드 상태에서는 미로드 라벨 유지)
-      storeData.postureCheckEnabled = true;
+    it("should show imagesnap 필요 when not available", () => {
+      core.setState({ imagesnapAvailable: false });
       core.updateTrayMenu();
-      template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
-      aiItem = template.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
-      expect(aiItem.label).toContain("모델 미로드");
+      const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      const modeItem = template.find((t) => t.label === "감시 모드");
+      const aiOption = modeItem.submenu[1];
+      expect(aiOption.label).toContain("imagesnap 필요");
+      expect(aiOption.enabled).toBe(false);
     });
 
   });
@@ -518,23 +516,21 @@ describe("createAppCore", () => {
       expect(storeData.snapshotEnabled).toBe(true);
     });
 
-    it("should toggle posture check and call stopPostureCheck on disable", () => {
+    it("should switch to alarm-only mode", () => {
       storeData.postureCheckEnabled = true;
       const items = getMenuItems();
-      const aiItem = items.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
-      aiItem.click();
+      const modeItem = items.find((t) => t.label === "감시 모드");
+      modeItem.submenu[0].click(); // 알림만
       expect(storeData.postureCheckEnabled).toBe(false);
     });
 
-    it("should enable posture check and trigger model load", async () => {
+    it("should switch to AI mode and trigger model load", async () => {
       storeData.postureCheckEnabled = false;
       const items = getMenuItems();
-      const aiItem = items.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
-      aiItem.click();
+      const modeItem = items.find((t) => t.label === "감시 모드");
+      modeItem.submenu[1].click(); // AI 자세 검사
       expect(storeData.postureCheckEnabled).toBe(true);
-      // loadPostureDetector 비동기 호출됨
       await vi.advanceTimersByTimeAsync(500);
-      // 모델 로드 결과에 따라 상태가 갱신됨
       core.updateTrayMenu();
       expect(mockMenu.buildFromTemplate).toHaveBeenCalled();
     });
