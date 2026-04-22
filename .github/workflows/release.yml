@@ -31,7 +31,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           gh release create "$GITHUB_REF_NAME" \
-            "dist/거북이경보-${VERSION}-arm64.dmg#거북이경보-AppleSilicon.dmg" \
-            "dist/거북이경보-${VERSION}.dmg#거북이경보-Intel.dmg" \
+            "dist/TurtleAlert-${VERSION}-arm64.dmg#거북이경보-AppleSilicon.dmg" \
+            "dist/TurtleAlert-${VERSION}.dmg#거북이경보-Intel.dmg" \
             --title "거북이경보 ${GITHUB_REF_NAME}" \
             --generate-notes
