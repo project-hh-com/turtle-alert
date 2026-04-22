@@ -316,9 +316,12 @@ function createAppCore(deps) {
             stopTimer();
           } else {
             startTimer(store.get("intervalMin"));
+            const isAiMode = store.get("postureCheckEnabled");
             const notification = new Notification({
-              title: "🐢 거북이경보 시작!",
-              body: "지금부터 자세 감시 들어간다~ 거북이 되지 말자!",
+              title: isAiMode ? "🤖 AI 자세 감시 시작!" : "🐢 거북이경보 시작!",
+              body: isAiMode
+                ? "AI가 자세를 감시합니다. 바르게 앉아주세요!"
+                : "스트레칭 알림이 울릴 때마다 자세를 바로잡아주세요!",
               silent: !store.get("soundEnabled"),
               urgency: "critical",
             });
