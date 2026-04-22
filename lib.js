@@ -227,37 +227,27 @@ function createAppCore(deps) {
   function flashTrayAlert() {
     if (!tray) return;
     if (alertFlashTimer) {
-      clearInterval(alertFlashTimer);
+      clearTimeout(alertFlashTimer);
       alertFlashTimer = null;
     }
 
-    const FLASH_DURATION_MS = 5000;
-    const FLASH_INTERVAL_MS = 500;
-    let visible = true;
-    const startTime = Date.now();
+    const ALERT_DURATION_MS = 5000;
+    alertFlashTimer = setTimeout(() => {
+      alertFlashTimer = null;
+      updateTrayTitle();
+    }, ALERT_DURATION_MS);
 
-    alertFlashTimer = setInterval(() => {
-      if (Date.now() - startTime >= FLASH_DURATION_MS) {
-        clearInterval(alertFlashTimer);
-        alertFlashTimer = null;
-        updateTrayTitle();
-        return;
-      }
-      visible = !visible;
-      tray.setTitle(visible ? "🚨 스트레칭!" : "");
-    }, FLASH_INTERVAL_MS);
-
-    tray.setTitle("🚨 스트레칭!");
+    // 즉시 경보 아이콘으로 전환 (타이머는 계속 표시)
+    updateTrayTitle();
   }
 
   function updateTrayTitle() {
     if (!tray) return;
-    // 깜빡임 중이면 건드리지 않음
-    if (alertFlashTimer) return;
+    const icon = alertFlashTimer ? "🚨" : "🐢";
     if (isRunning) {
-      tray.setTitle(`🐢 ${formatTime(remainSec)}`);
+      tray.setTitle(`${icon} ${formatTime(remainSec)}`);
     } else {
-      tray.setTitle("🐢");
+      tray.setTitle(icon);
     }
   }
 
@@ -288,7 +278,7 @@ function createAppCore(deps) {
       timer = null;
     }
     if (alertFlashTimer) {
-      clearInterval(alertFlashTimer);
+      clearTimeout(alertFlashTimer);
       alertFlashTimer = null;
     }
     isRunning = false;

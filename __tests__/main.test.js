@@ -582,55 +582,46 @@ describe("createAppCore", () => {
     let mockTray;
     beforeEach(() => { mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: mockTray }); });
 
-    it("should flash tray title on sendAlert", () => {
+    it("should show alert icon on sendAlert", () => {
       core.sendAlert();
-      expect(mockTray.setTitle).toHaveBeenCalledWith("🚨 스트레칭!");
+      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
+      expect(calls.some((c) => c.startsWith("🚨"))).toBe(true);
     });
 
-    it("should toggle tray title during flash", () => {
-      core.sendAlert();
+    it("should show alert icon with timer during alert period", () => {
+      core.startTimer(30);
       mockTray.setTitle.mockClear();
-      vi.advanceTimersByTime(500);
-      expect(mockTray.setTitle).toHaveBeenCalledWith("");
-      vi.advanceTimersByTime(500);
-      expect(mockTray.setTitle).toHaveBeenCalledWith("🚨 스트레칭!");
+      core.sendAlert();
+      // 타이머 틱 후에도 🚨 아이콘 유지 + 시간 표시
+      vi.advanceTimersByTime(1000);
+      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
+      expect(calls.some((c) => c.startsWith("🚨") && c.includes(":"))).toBe(true);
     });
 
-    it("should restore normal title after flash duration", () => {
+    it("should restore turtle icon after 5 seconds", () => {
       core.startTimer(30);
       mockTray.setTitle.mockClear();
       core.sendAlert();
       vi.advanceTimersByTime(5500);
-      // 깜빡임 종료 후 updateTrayTitle이 호출되어 일반 타이틀로 복귀
       const lastCall = mockTray.setTitle.mock.calls.at(-1)[0];
       expect(lastCall).toContain("🐢");
     });
 
-    it("should cancel previous flash when new alert fires", () => {
+    it("should cancel previous alert timer when new alert fires", () => {
       core.sendAlert();
       mockTray.setTitle.mockClear();
-      core.sendAlert(); // 두 번째 알림
-      expect(mockTray.setTitle).toHaveBeenCalledWith("🚨 스트레칭!");
+      core.sendAlert();
+      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
+      expect(calls.some((c) => c.startsWith("🚨"))).toBe(true);
     });
 
-    it("should clear flash on stopTimer", () => {
+    it("should clear alert on stopTimer", () => {
       core.startTimer(30);
       core.sendAlert();
       core.stopTimer();
       mockTray.setTitle.mockClear();
       vi.advanceTimersByTime(5500);
-      // 깜빡임이 정리되었으므로 추가 setTitle 호출 없음
-      expect(mockTray.setTitle).not.toHaveBeenCalledWith("🚨 스트레칭!");
-    });
-
-    it("should not update title during flash from timer tick", () => {
-      core.startTimer(30);
-      core.sendAlert();
-      mockTray.setTitle.mockClear();
-      // 타이머 틱이 발생해도 깜빡임 중에는 updateTrayTitle이 건너뜀
-      vi.advanceTimersByTime(1000);
-      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls).not.toContain(expect.stringContaining("🐢"));
+      expect(mockTray.setTitle).not.toHaveBeenCalledWith(expect.stringContaining("🚨"));
     });
   });
 });
