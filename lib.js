@@ -267,6 +267,7 @@ function createAppCore(deps) {
     store.set("intervalMin", intervalMin);
     const intervalMs = intervalMin * 60 * 1000;
     nextAlertTime = Date.now() + intervalMs;
+    remainSec = intervalMin * 60;
     isRunning = true;
 
     timer = setInterval(() => {
