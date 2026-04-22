@@ -541,6 +541,19 @@ describe("createAppCore", () => {
       expect(storeData.postureCheckEnabled).toBe(false);
     });
 
+    it("should enable posture check and trigger model load", async () => {
+      storeData.postureCheckEnabled = false;
+      const items = getMenuItems();
+      const aiItem = items.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
+      aiItem.click();
+      expect(storeData.postureCheckEnabled).toBe(true);
+      // loadPostureDetector 비동기 호출됨
+      await vi.advanceTimersByTimeAsync(500);
+      // 모델 로드 결과에 따라 상태가 갱신됨
+      core.updateTrayMenu();
+      expect(mockMenu.buildFromTemplate).toHaveBeenCalled();
+    });
+
     it("should toggle autoStart via checkbox", () => {
       storeData.autoStart = false;
       const items = getMenuItems();

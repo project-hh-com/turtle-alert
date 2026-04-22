@@ -796,6 +796,103 @@ describe("evaluatePosture with baseline edge cases", () => {
   });
 });
 
+// ===== calibrate 내부 분기 커버리지 =====
+describe("calibrate internal branches", () => {
+  it("should handle frame where a keypoint is not found at all", () => {
+    // left_eye가 아예 없는 프레임 — findKeypoint이 undefined 반환
+    const frame = [
+      { name: "nose", x: 160, y: 80, score: 0.9 },
+      // left_eye 없음
+      { name: "right_eye", x: 165, y: 78, score: 0.8 },
+      { name: "left_ear", x: 145, y: 85, score: 0.9 },
+      { name: "right_ear", x: 175, y: 85, score: 0.9 },
+      { name: "left_shoulder", x: 110, y: 200, score: 0.9 },
+      { name: "right_shoulder", x: 210, y: 200, score: 0.9 },
+    ];
+    const result = calibrate([frame]);
+    expect(result).not.toBeNull();
+    // left_eye는 averaged에 없을 수 있지만 필수 키포인트가 아니므로 정상
+  });
+
+  it("should handle all keypoints below MIN_KEYPOINT_SCORE for a name", () => {
+    // left_eye가 존재하지만 모든 프레임에서 score가 낮음 → count=0 → averaged에 미포함
+    const frame = createKeypoints();
+    frame[1] = { name: "left_eye", x: 155, y: 78, score: 0.1 };
+    const result = calibrate([frame]);
+    expect(result).not.toBeNull();
+  });
+
+  it("should handle multiple frames with mixed keypoint availability", () => {
+    const frame1 = createKeypoints();
+    const frame2 = createKeypoints();
+    // frame2에서 left_ear score가 낮음
+    frame2[3] = { name: "left_ear", x: 145, y: 90, score: 0.1 };
+    const result = calibrate([frame1, frame2]);
+    expect(result).not.toBeNull();
+    // left_ear는 frame1만 사용되어 평균 = frame1 값
+    expect(result.keypoints.left_ear.y).toBe(85);
+  });
+});
+
+// ===== evaluatePosture 신뢰도 분기 커버리지 =====
+describe("evaluatePosture confidence branches", () => {
+  it("should handle missing left_shoulder (not found)", () => {
+    const kps = createKeypoints();
+    kps[5] = { name: "not_shoulder", x: 110, y: 200, score: 0.9 };
+    const result = evaluatePosture(kps);
+    expect(result.isGood).toBe(true);
+    expect(result.issues).toContain("키포인트 신뢰도 부족");
+  });
+
+  it("should handle missing right_shoulder (not found)", () => {
+    const kps = createKeypoints();
+    kps[6] = { name: "not_shoulder", x: 210, y: 200, score: 0.9 };
+    const result = evaluatePosture(kps);
+    expect(result.isGood).toBe(true);
+    expect(result.issues).toContain("키포인트 신뢰도 부족");
+  });
+
+  it("should handle left_shoulder low score with baseline", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      left_shoulder: { name: "left_shoulder", x: 110, y: 200, score: 0.1 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).toContain("키포인트 신뢰도 부족");
+  });
+
+  it("should handle right_shoulder low score with baseline", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      right_shoulder: { name: "right_shoulder", x: 210, y: 200, score: 0.1 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).toContain("키포인트 신뢰도 부족");
+  });
+
+  it("should handle nose not found with baseline", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints();
+    kps[0] = { name: "not_nose", x: 0, y: 0, score: 0.9 };
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).toContain("키포인트 신뢰도 부족");
+  });
+
+  it("should handle narrow shoulders with baseline", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      left_shoulder: { name: "left_shoulder", x: 159, y: 200, score: 0.9 },
+      right_shoulder: { name: "right_shoulder", x: 160, y: 200, score: 0.9 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.isGood).toBe(true);
+    expect(result.issues).toContain("어깨 간격이 너무 좁습니다");
+  });
+});
+
+// ===== lib.js 418-430 (posture AI enable click) 분기 =====
+// 이 부분은 lib.js의 트레이 메뉴 클릭 핸들러로, main.test.js에서 커버
+
 // ===== 상수 값 확인 =====
 describe("상수 값 확인", () => {
   it("should have correct fallback threshold values", () => {
