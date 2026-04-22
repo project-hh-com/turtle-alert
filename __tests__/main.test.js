@@ -429,5 +429,195 @@ describe("createAppCore", () => {
     it("should expose runCalibration", () => {
       expect(core.runCalibration).toBeTypeOf("function");
     });
+
+    it("should show posture AI menu with various states", () => {
+      // imagesnap 사용 불가 상태
+      core.setState({ imagesnapAvailable: false });
+      core.updateTrayMenu();
+      let template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      let aiItem = template.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
+      expect(aiItem.label).toContain("imagesnap 필요");
+
+      // imagesnap 가능, 모델 미로드
+      core.setState({ imagesnapAvailable: true });
+      core.updateTrayMenu();
+      template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      aiItem = template.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
+      expect(aiItem.label).toContain("모델 미로드");
+
+      // postureCheckEnabled 활성화 (모델 미로드 상태에서는 미로드 라벨 유지)
+      storeData.postureCheckEnabled = true;
+      core.updateTrayMenu();
+      template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      aiItem = template.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
+      expect(aiItem.label).toContain("모델 미로드");
+    });
+
+    it("should show calibration menu items", () => {
+      core.setState({ imagesnapAvailable: true });
+      core.updateTrayMenu();
+      const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      const calItem = template.find((t) => typeof t.label === "string" && t.label.includes("기준 자세"));
+      expect(calItem).toBeDefined();
+      expect(calItem.label).toContain("기준 자세 설정");
+    });
+
+    it("should show calibration info when no baseline", () => {
+      core.setState({ imagesnapAvailable: true });
+      core.updateTrayMenu();
+      const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+      const infoItem = template.find((t) => typeof t.label === "string" && t.label.includes("캘리브레이션"));
+      expect(infoItem).toBeDefined();
+      expect(infoItem.enabled).toBe(false);
+    });
+  });
+
+  describe("tray menu click handlers", () => {
+    let mockTray;
+    beforeEach(() => { mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: mockTray, imagesnapAvailable: true }); });
+
+    function getMenuItems() {
+      core.updateTrayMenu();
+      return mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
+    }
+
+    it("should start timer via 감시 시작 button", () => {
+      const items = getMenuItems();
+      const startBtn = items.find((t) => t.label === "🐢 감시 시작!");
+      expect(startBtn.enabled).toBe(true);
+      startBtn.click();
+      expect(core.getState().isRunning).toBe(true);
+    });
+
+    it("should toggle timer via 시작/중지", () => {
+      let items = getMenuItems();
+      const toggleBtn = items.find((t) => t.label === "시작");
+      toggleBtn.click();
+      expect(core.getState().isRunning).toBe(true);
+
+      items = getMenuItems();
+      const stopBtn = items.find((t) => t.label === "중지");
+      stopBtn.click();
+      expect(core.getState().isRunning).toBe(false);
+    });
+
+    it("should trigger sendAlert via 지금 스트레칭", () => {
+      const items = getMenuItems();
+      const stretchBtn = items.find((t) => t.label === "지금 스트레칭!");
+      stretchBtn.click();
+      expect(storeData.alertCount).toBe(1);
+    });
+
+    it("should change interval via submenu", () => {
+      const items = getMenuItems();
+      const intervalMenu = items.find((t) => t.label === "알림 간격");
+      const opt15 = intervalMenu.submenu.find((s) => s.label === "15분");
+      opt15.click();
+      expect(storeData.intervalMin).toBe(15);
+      expect(core.getState().isRunning).toBe(true);
+    });
+
+    it("should toggle sound via checkbox", () => {
+      storeData.soundEnabled = true;
+      let items = getMenuItems();
+      const soundItem = items.find((t) => t.label === "알림 소리");
+      soundItem.click();
+      expect(storeData.soundEnabled).toBe(false);
+    });
+
+    it("should toggle snapshot via checkbox", () => {
+      storeData.snapshotEnabled = false;
+      let items = getMenuItems();
+      const snapItem = items.find((t) => typeof t.label === "string" && t.label.includes("자세 스냅샷"));
+      snapItem.click();
+      expect(storeData.snapshotEnabled).toBe(true);
+    });
+
+    it("should toggle posture check and call stopPostureCheck on disable", () => {
+      storeData.postureCheckEnabled = true;
+      const items = getMenuItems();
+      const aiItem = items.find((t) => typeof t.label === "string" && t.label.includes("자세 감시 AI"));
+      aiItem.click();
+      expect(storeData.postureCheckEnabled).toBe(false);
+    });
+
+    it("should toggle autoStart via checkbox", () => {
+      storeData.autoStart = false;
+      const items = getMenuItems();
+      const autoItem = items.find((t) => typeof t.label === "string" && t.label.includes("자동 실행"));
+      autoItem.click();
+      expect(storeData.autoStart).toBe(true);
+      expect(mockApp.setLoginItemSettings).toHaveBeenCalledWith({ openAtLogin: true });
+    });
+
+    it("should call app.quit on 종료", () => {
+      const items = getMenuItems();
+      const quitItem = items.find((t) => t.label === "종료");
+      quitItem.click();
+      expect(mockApp.quit).toHaveBeenCalled();
+    });
+
+    it("should open snapshot folder via shell", () => {
+      const items = getMenuItems();
+      const openItem = items.find((t) => typeof t.label === "string" && t.label.includes("스냅샷 폴더 열기"));
+      openItem.click();
+      expect(mockShell.openPath).toHaveBeenCalled();
+    });
+  });
+
+  describe("flashTrayAlert", () => {
+    let mockTray;
+    beforeEach(() => { mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: mockTray }); });
+
+    it("should flash tray title on sendAlert", () => {
+      core.sendAlert();
+      expect(mockTray.setTitle).toHaveBeenCalledWith("🚨 스트레칭!");
+    });
+
+    it("should toggle tray title during flash", () => {
+      core.sendAlert();
+      mockTray.setTitle.mockClear();
+      vi.advanceTimersByTime(500);
+      expect(mockTray.setTitle).toHaveBeenCalledWith("");
+      vi.advanceTimersByTime(500);
+      expect(mockTray.setTitle).toHaveBeenCalledWith("🚨 스트레칭!");
+    });
+
+    it("should restore normal title after flash duration", () => {
+      core.startTimer(30);
+      mockTray.setTitle.mockClear();
+      core.sendAlert();
+      vi.advanceTimersByTime(5500);
+      // 깜빡임 종료 후 updateTrayTitle이 호출되어 일반 타이틀로 복귀
+      const lastCall = mockTray.setTitle.mock.calls.at(-1)[0];
+      expect(lastCall).toContain("🐢");
+    });
+
+    it("should cancel previous flash when new alert fires", () => {
+      core.sendAlert();
+      mockTray.setTitle.mockClear();
+      core.sendAlert(); // 두 번째 알림
+      expect(mockTray.setTitle).toHaveBeenCalledWith("🚨 스트레칭!");
+    });
+
+    it("should clear flash on stopTimer", () => {
+      core.startTimer(30);
+      core.sendAlert();
+      core.stopTimer();
+      mockTray.setTitle.mockClear();
+      vi.advanceTimersByTime(5500);
+      // 깜빡임이 정리되었으므로 추가 setTitle 호출 없음
+      expect(mockTray.setTitle).not.toHaveBeenCalledWith("🚨 스트레칭!");
+    });
+
+    it("should not update title during flash from timer tick", () => {
+      core.startTimer(30);
+      core.sendAlert();
+      mockTray.setTitle.mockClear();
+      // 타이머 틱이 발생해도 깜빡임 중에는 updateTrayTitle이 건너뜀
+      vi.advanceTimersByTime(1000);
+      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
+      expect(calls).not.toContain(expect.stringContaining("🐢"));
+    });
   });
 });

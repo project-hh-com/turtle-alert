@@ -676,6 +676,126 @@ describe("evaluatePosture edge cases", () => {
   });
 });
 
+// ===== calibrate 추가 에지 케이스 =====
+describe("calibrate edge cases", () => {
+  it("should handle frames where ear keypoints are missing", () => {
+    const frame = createKeypoints();
+    // 귀 키포인트 제거
+    frame[3] = { name: "not_left_ear", x: 0, y: 0, score: 0.9 };
+    frame[4] = { name: "not_right_ear", x: 0, y: 0, score: 0.9 };
+    const result = calibrate([frame]);
+    expect(result).not.toBeNull();
+    expect(result.earYDiffRatio).toBe(0);
+    expect(result.earConfidenceDiff).toBe(0);
+    expect(result.earForwardRatio).toBeNull();
+  });
+
+  it("should use right ear for earForwardRatio when left ear is missing", () => {
+    const frame = createKeypoints({
+      left_ear: { name: "left_ear", x: 145, y: 85, score: 0.1 },
+      right_ear: { name: "right_ear", x: 175, y: 90, score: 0.9 },
+    });
+    const result = calibrate([frame]);
+    // left_ear excluded (score < 0.3), right_ear used
+    expect(result.earForwardRatio).toBeCloseTo((200 - 90) / 100);
+  });
+
+  it("should compute earYDiffRatio when only one ear in averaged but both exist raw", () => {
+    const frame = createKeypoints({
+      left_ear: { name: "left_ear", x: 145, y: 80, score: 0.9 },
+      right_ear: { name: "right_ear", x: 175, y: 85, score: 0.1 },
+    });
+    const result = calibrate([frame]);
+    // right_ear excluded from averaged → earYDiffRatio = 0 (only one ear)
+    expect(result.earYDiffRatio).toBe(0);
+    // but earConfidenceDiff uses raw → |0.9 - 0.1| = 0.8
+    expect(result.earConfidenceDiff).toBeCloseTo(0.8);
+  });
+
+  it("should handle frame with no ears at all in raw data", () => {
+    const frame = createKeypoints();
+    frame[3] = { name: "not_ear", x: 0, y: 0, score: 0.9 };
+    frame[4] = { name: "not_ear", x: 0, y: 0, score: 0.9 };
+    const result = calibrate([frame]);
+    expect(result.earConfidenceDiff).toBe(0);
+  });
+});
+
+// ===== evaluatePosture with baseline 추가 에지 케이스 =====
+describe("evaluatePosture with baseline edge cases", () => {
+  it("should handle baseline with earForwardRatio=null (no ears in baseline)", () => {
+    const baseline = createBaseline();
+    baseline.earForwardRatio = null;
+    // 귀가 어깨 근처여도 earForwardRatio가 null이면 전방 돌출 체크 스킵
+    const kps = createKeypoints({
+      left_ear: { name: "left_ear", x: 145, y: 197, score: 0.9 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).not.toContain("고개 전방 돌출");
+  });
+
+  it("should handle baseline with shoulderWidth=0", () => {
+    const baseline = createBaseline();
+    baseline.shoulderWidth = 0;
+    const kps = createKeypoints({
+      left_shoulder: { name: "left_shoulder", x: 85, y: 200, score: 0.9 },
+      right_shoulder: { name: "right_shoulder", x: 215, y: 200, score: 0.9 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).not.toContain("화면에 너무 가까움");
+  });
+
+  it("should skip ear forward check when no ear has good confidence", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      left_ear: { name: "left_ear", x: 145, y: 197, score: 0.1 },
+      right_ear: { name: "right_ear", x: 175, y: 197, score: 0.1 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).not.toContain("고개 전방 돌출");
+  });
+
+  it("should use right ear for forward check when left ear low confidence", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      left_ear: { name: "left_ear", x: 145, y: 85, score: 0.1 },
+      right_ear: { name: "right_ear", x: 175, y: 185, score: 0.9 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).toContain("고개 전방 돌출");
+  });
+
+  it("should not detect head rotation when only one ear exists", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints();
+    kps[3] = { name: "not_ear", x: 0, y: 0, score: 0.9 };
+    // leftEar not found, rightEar exists → skip rotation check
+    const result = evaluatePosture(kps, baseline);
+    expect(result.issues).not.toContain("고개 회전");
+  });
+
+  it("should handle narrow shoulder width with baseline", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      left_shoulder: { name: "left_shoulder", x: 155, y: 200, score: 0.9 },
+      right_shoulder: { name: "right_shoulder", x: 160, y: 200, score: 0.9 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.isGood).toBe(true);
+    expect(result.issues).toContain("어깨 간격이 너무 좁습니다");
+  });
+
+  it("should handle low confidence keypoints with baseline", () => {
+    const baseline = createBaseline();
+    const kps = createKeypoints({
+      nose: { name: "nose", x: 160, y: 80, score: 0.1 },
+    });
+    const result = evaluatePosture(kps, baseline);
+    expect(result.isGood).toBe(true);
+    expect(result.issues).toContain("키포인트 신뢰도 부족");
+  });
+});
+
 // ===== 상수 값 확인 =====
 describe("상수 값 확인", () => {
   it("should have correct fallback threshold values", () => {
