@@ -620,18 +620,23 @@ function createAppCore(deps) {
 
     try {
       const result = await captureAndAnalyze(baseline);
-      if (!result.isGood && result.issues.length > 0 && !result.issues.includes("키포인트 신뢰도 부족")) {
+      const isActuallyBad = !result.isGood && result.issues.length > 0 && !result.issues.includes("키포인트 신뢰도 부족");
+      const isUncertain = result.issues.includes("키포인트 신뢰도 부족") || result.issues.includes("포즈를 감지하지 못했습니다") || result.issues.includes("어깨 간격이 너무 좁습니다");
+
+      if (isActuallyBad) {
         consecutiveBadCount++;
         if (consecutiveBadCount >= CONSECUTIVE_BAD_THRESHOLD) {
           sendPostureAlert(result.issues);
-          consecutiveBadCount = 0;
+          // 알림 후에도 badPosture 유지 — 정자세 복귀까지 🐢 아이콘 유지
         }
-      } else {
+      } else if (!isUncertain) {
+        // 확실히 좋은 자세일 때만 복귀
         consecutiveBadCount = 0;
         if (badPosture) {
           setPostureGood();
         }
       }
+      // isUncertain이면 현재 상태 유지 (판단 불가)
     } catch {
       // 촬영/분석 실패 시 무시 (카메라 사용 중 등)
     }
