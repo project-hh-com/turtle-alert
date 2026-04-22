@@ -11,7 +11,7 @@ const {
 // ===== STRETCHES =====
 describe("STRETCHES", () => {
   it("should have 8 stretch items", () => {
-    expect(STRETCHES).toHaveLength(8);
+    expect(STRETCHES).toHaveLength(27);
   });
 
   it("should have name, desc, emoji for each stretch", () => {
@@ -42,7 +42,7 @@ describe("pickRandomStretch", () => {
     const spy = vi.spyOn(Math, "random").mockReturnValue(0);
     expect(pickRandomStretch()).toBe(STRETCHES[0]);
     spy.mockReturnValue(0.999);
-    expect(pickRandomStretch()).toBe(STRETCHES[7]);
+    expect(pickRandomStretch()).toBe(STRETCHES[STRETCHES.length - 1]);
     spy.mockRestore();
   });
 });
