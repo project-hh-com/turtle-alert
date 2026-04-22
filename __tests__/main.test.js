@@ -245,10 +245,10 @@ describe("createAppCore", () => {
       expect(ci.label).toContain("7회");
     });
 
-    it("should have 4 interval options", () => {
+    it("should have 7 interval options", () => {
       const t = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: t });
       core.updateTrayMenu();
-      expect(mockMenu.buildFromTemplate.mock.calls.at(-1)[0].find((i) => i.label === "알림 간격").submenu).toHaveLength(4);
+      expect(mockMenu.buildFromTemplate.mock.calls.at(-1)[0].find((i) => i.label === "알림 간격").submenu).toHaveLength(7);
     });
 
     it("should check current interval", () => {

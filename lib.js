@@ -353,10 +353,28 @@ function createAppCore(deps) {
         label: "알림 간격",
         submenu: [
           {
+            label: "5분",
+            type: "radio",
+            checked: intervalMin === 5,
+            click: () => startTimer(5),
+          },
+          {
+            label: "10분",
+            type: "radio",
+            checked: intervalMin === 10,
+            click: () => startTimer(10),
+          },
+          {
             label: "15분",
             type: "radio",
             checked: intervalMin === 15,
             click: () => startTimer(15),
+          },
+          {
+            label: "20분",
+            type: "radio",
+            checked: intervalMin === 20,
+            click: () => startTimer(20),
           },
           {
             label: "30분",
