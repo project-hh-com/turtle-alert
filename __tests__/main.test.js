@@ -381,7 +381,41 @@ describe("createAppCore", () => {
   });
 
   describe("getState / setState", () => {
-    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); });
+    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); });
     it("should update partial", () => { core.setState({ remainSec: 42, isRunning: true }); expect(core.getState().remainSec).toBe(42); expect(core.getState().isRunning).toBe(true); });
+  });
+
+  describe("posture monitoring", () => {
+    let mockTray;
+    beforeEach(() => { mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: mockTray }); });
+
+    it("should expose loadPostureDetector", () => {
+      expect(core.loadPostureDetector).toBeTypeOf("function");
+    });
+
+    it("should expose startPostureCheck", () => {
+      expect(core.startPostureCheck).toBeTypeOf("function");
+    });
+
+    it("should expose stopPostureCheck", () => {
+      expect(core.stopPostureCheck).toBeTypeOf("function");
+    });
+
+    it("should not throw on stopPostureCheck without starting", () => {
+      expect(() => core.stopPostureCheck()).not.toThrow();
+    });
+
+    it("should start and stop posture check without error", () => {
+      core.startPostureCheck();
+      core.stopPostureCheck();
+    });
+
+    it("should have postureDetectorReady=false initially", () => {
+      expect(core.getState().postureDetectorReady).toBe(false);
+    });
+
+    it("should have postureDetectorLoading=false initially", () => {
+      expect(core.getState().postureDetectorLoading).toBe(false);
+    });
   });
 });

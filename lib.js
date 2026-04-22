@@ -44,6 +44,13 @@ const STRETCHES = [
 const path = require("path");
 const fs = require("fs");
 const { execFile } = require("child_process");
+const {
+  initDetector,
+  captureAndAnalyze,
+  disposeDetector,
+  DEFAULT_CHECK_INTERVAL_SEC,
+  CONSECUTIVE_BAD_THRESHOLD,
+} = require("./lib/posture-detector");
 
 const SNAPSHOT_CONSECUTIVE_FAIL_LIMIT = 3;
 
@@ -158,6 +165,10 @@ function createAppCore(deps) {
   let nextAlertTime = 0;
   let snapshotFailCount = 0;
   let imagesnapAvailable = false;
+  let postureTimer = null;
+  let postureDetectorReady = false;
+  let postureDetectorLoading = false;
+  let consecutiveBadCount = 0;
 
   // 앱 시작 시 imagesnap 존재 여부 확인
   checkImagesnap().then((available) => {
@@ -350,6 +361,42 @@ function createAppCore(deps) {
           updateTrayMenu();
         },
       },
+      { type: "separator" },
+      {
+        label: postureDetectorLoading
+          ? "자세 감시 AI (모델 로딩 중...)"
+          : !imagesnapAvailable
+            ? "자세 감시 AI (imagesnap 필요)"
+            : !postureDetectorReady
+              ? "자세 감시 AI (모델 미로드)"
+              : `자세 감시 AI${store.get("postureCheckEnabled") ? " 🤖" : ""}`,
+        type: "checkbox",
+        checked: store.get("postureCheckEnabled") || false,
+        enabled: imagesnapAvailable && !postureDetectorLoading,
+        click: () => {
+          const willEnable = !store.get("postureCheckEnabled");
+          store.set("postureCheckEnabled", willEnable);
+          if (willEnable) {
+            loadPostureDetector().then(() => {
+              if (postureDetectorReady) {
+                startPostureCheck();
+              } else {
+                store.set("postureCheckEnabled", false);
+                const failNotice = new Notification({
+                  title: "🤖 자세 감시 AI 로드 실패",
+                  body: "TensorFlow.js 모델을 불러올 수 없습니다. 의존성을 확인해주세요.",
+                  silent: true,
+                });
+                failNotice.show();
+              }
+              updateTrayMenu();
+            });
+          } else {
+            stopPostureCheck();
+          }
+          updateTrayMenu();
+        },
+      },
       {
         label: "  📂 스냅샷 폴더 열기",
         click: () => {
@@ -379,12 +426,97 @@ function createAppCore(deps) {
         label: "종료",
         click: () => {
           stopTimer();
+          stopPostureCheck();
+          disposeDetector();
           app.quit();
         },
       },
     ]);
 
     tray.setContextMenu(contextMenu);
+  }
+
+  // -- 자세 감시 (AI) --
+
+  const POSTURE_ALERT_MESSAGES = {
+    "거북목": {
+      title: "🚨 거북목 감지!",
+      body: "🐢 목이 앞으로 나왔어요! 턱을 뒤로 당기고 귀가 어깨 위에 오도록 자세를 교정하세요.",
+    },
+    "어깨 기울어짐": {
+      title: "🚨 자세가 삐뚤어졌어요!",
+      body: "↔️ 어깨가 한쪽으로 기울었어요. 양쪽 어깨 높이를 맞추고 허리를 펴세요.",
+    },
+    "고개 전방 돌출": {
+      title: "🚨 고개가 앞으로 나왔어요!",
+      body: "😮 모니터에 너무 가까이 다가갔어요. 등을 의자에 붙이고 모니터와 팔 길이 거리를 유지하세요.",
+    },
+  };
+
+  /* v8 ignore start — tfjs 의존 함수, captureAndAnalyze 모킹 불가 */
+  async function loadPostureDetector() {
+    if (postureDetectorReady || postureDetectorLoading) return;
+    postureDetectorLoading = true;
+    const success = await initDetector();
+    postureDetectorReady = success;
+    postureDetectorLoading = false;
+    updateTrayMenu();
+  }
+
+  function sendPostureAlert(issues) {
+    const soundEnabled = store.get("soundEnabled");
+    const firstIssue = issues[0];
+    const msg = POSTURE_ALERT_MESSAGES[firstIssue] || {
+      title: "🚨 자세 교정 필요!",
+      body: `감지된 문제: ${issues.join(", ")}. 바른 자세로 앉아주세요!`,
+    };
+
+    const notification = new Notification({
+      title: msg.title,
+      body: issues.length > 1
+        ? `${msg.body}\n(추가 감지: ${issues.slice(1).join(", ")})`
+        : msg.body,
+      silent: !soundEnabled,
+      urgency: "critical",
+    });
+    notification.show();
+  }
+
+  async function runPostureCheck() {
+    if (!postureDetectorReady) return;
+
+    try {
+      const result = await captureAndAnalyze();
+      if (!result.isGood && result.issues.length > 0 && !result.issues.includes("키포인트 신뢰도 부족")) {
+        consecutiveBadCount++;
+        if (consecutiveBadCount >= CONSECUTIVE_BAD_THRESHOLD) {
+          sendPostureAlert(result.issues);
+          consecutiveBadCount = 0;
+        }
+      } else {
+        consecutiveBadCount = 0;
+      }
+    } catch {
+      // 촬영/분석 실패 시 무시 (카메라 사용 중 등)
+    }
+  }
+
+  /* v8 ignore stop */
+
+  function startPostureCheck() {
+    stopPostureCheck();
+    const intervalSec = store.get("postureCheckInterval") || DEFAULT_CHECK_INTERVAL_SEC;
+    postureTimer = setInterval(runPostureCheck, intervalSec * 1000);
+    // 시작 직후 1회 체크
+    runPostureCheck();
+  }
+
+  function stopPostureCheck() {
+    if (postureTimer) {
+      clearInterval(postureTimer);
+      postureTimer = null;
+    }
+    consecutiveBadCount = 0;
   }
 
   function handleResume() {
@@ -404,7 +536,10 @@ function createAppCore(deps) {
     stopTimer,
     updateTrayMenu,
     handleResume,
-    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount }),
+    loadPostureDetector,
+    startPostureCheck,
+    stopPostureCheck,
+    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading }),
     setState: (state) => {
       if ("timer" in state) timer = state.timer;
       if ("remainSec" in state) remainSec = state.remainSec;
