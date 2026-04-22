@@ -47,6 +47,9 @@ app.whenReady().then(() => {
       snapshotEnabled: false,
       snapshotSavePath: path.join(app.getPath("home"), "거북이경보-스냅샷"),
       snapshotRetentionDays: 30,
+      postureCheckEnabled: false,
+      postureCheckInterval: 60,
+      calibrationData: null,
     },
     clearInvalidConfig: true,
   });
@@ -78,6 +81,21 @@ app.whenReady().then(() => {
     store.get("snapshotSavePath"),
     store.get("snapshotRetentionDays")
   );
+
+  // 카메라 권한 확인 후 자세 감시 복원
+  if (store.get("postureCheckEnabled")) {
+    const cameraStatus = systemPreferences.getMediaAccessStatus("camera");
+    if (cameraStatus === "granted") {
+      core.loadPostureDetector().then(() => {
+        if (store.get("postureCheckEnabled")) {
+          core.startPostureCheck();
+        }
+      });
+    } else {
+      // 권한 없으면 비활성화
+      store.set("postureCheckEnabled", false);
+    }
+  }
 
   // 시스템 슬립 복귀 시 타이머 상태 재확인
   powerMonitor.on("resume", () => core.handleResume());

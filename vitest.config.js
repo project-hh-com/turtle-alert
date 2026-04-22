@@ -5,7 +5,7 @@ export default defineConfig({
     environment: "node",
     coverage: {
       provider: "v8",
-      include: ["lib.js"],
+      include: ["lib.js", "lib/posture-detector.js"],
       exclude: ["node_modules/**", "dist/**"],
       thresholds: {
         lines: 80,
