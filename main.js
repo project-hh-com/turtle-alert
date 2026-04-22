@@ -48,7 +48,7 @@ app.whenReady().then(() => {
       snapshotSavePath: path.join(app.getPath("home"), "거북이경보-스냅샷"),
       snapshotRetentionDays: 30,
       postureCheckEnabled: false,
-      postureCheckInterval: 60,
+      postureCheckInterval: 40,
       calibrationData: null,
     },
     clearInvalidConfig: true,

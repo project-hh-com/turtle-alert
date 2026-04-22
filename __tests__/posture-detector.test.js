@@ -929,7 +929,7 @@ describe("상수 값 확인", () => {
   });
 
   it("should have DEFAULT_CHECK_INTERVAL_SEC of 60", () => {
-    expect(DEFAULT_CHECK_INTERVAL_SEC).toBe(60);
+    expect(DEFAULT_CHECK_INTERVAL_SEC).toBe(40);
   });
 
   it("should have CALIBRATION_FRAME_COUNT of 5", () => {
