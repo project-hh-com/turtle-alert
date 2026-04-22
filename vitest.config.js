@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["lib.js", "lib/posture-detector.js"],
-      exclude: ["node_modules/**", "dist/**"],
+      exclude: ["node_modules/**", "dist/**", "lib/posture-capture.js"],
       thresholds: {
         lines: 80,
         functions: 80,

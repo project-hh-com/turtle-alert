@@ -526,7 +526,7 @@ function createAppCore(deps) {
     },
   };
 
-  /* v8 ignore start — tfjs 의존 함수, captureAndAnalyze 모킹 불가 */
+  /* c8 ignore start */
   async function loadPostureDetector() {
     if (postureDetectorReady || postureDetectorLoading) return;
     postureDetectorLoading = true;
@@ -626,7 +626,7 @@ function createAppCore(deps) {
     }
   }
 
-  /* v8 ignore stop */
+  /* c8 ignore stop */
 
   function startPostureCheck() {
     stopPostureCheck();
