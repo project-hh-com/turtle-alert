@@ -421,6 +421,14 @@ function createAppCore(deps) {
           updateTrayMenu();
         },
       },
+      {
+        label: "  📂 스냅샷 폴더 열기",
+        click: () => {
+          const savePath = store.get("snapshotSavePath");
+          fs.mkdirSync(savePath, { recursive: true });
+          if (shell) shell.openPath(savePath);
+        },
+      },
       { type: "separator" },
       {
         label: "감시 모드",
@@ -469,14 +477,6 @@ function createAppCore(deps) {
             },
           },
         ],
-      },
-      {
-        label: "  📂 스냅샷 폴더 열기",
-        click: () => {
-          const savePath = store.get("snapshotSavePath");
-          fs.mkdirSync(savePath, { recursive: true });
-          if (shell) shell.openPath(savePath);
-        },
       },
       {
         label: "로그인 시 자동 실행",
