@@ -249,8 +249,10 @@ function createAppCore(deps) {
 
   function getTrayIcon() {
     if (alertFlashTimer) return "🙌🏻";
-    if (badPosture) return "🐢";
-    return "🙂";
+    if (store.get("postureCheckEnabled")) {
+      return badPosture ? "🐢" : "🙂";
+    }
+    return "🐢";
   }
 
   function updateTrayTitle() {

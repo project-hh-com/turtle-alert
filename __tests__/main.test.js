@@ -175,14 +175,22 @@ describe("createAppCore", () => {
       expect(() => core.updateTrayTitle()).not.toThrow();
     });
 
-    it("should show icon only when running", () => {
+    it("should show 🐢 when running in alarm-only mode", () => {
       const t = { setTitle: vi.fn() };
       core.setState({ tray: t, isRunning: true, remainSec: 125 });
       core.updateTrayTitle();
-      expect(t.setTitle).toHaveBeenCalledWith("🙂");
+      expect(t.setTitle).toHaveBeenCalledWith("🐢");
     });
 
-    it("should show default icon when stopped", () => {
+    it("should show 🐢 when stopped in alarm-only mode", () => {
+      const t = { setTitle: vi.fn() };
+      core.setState({ tray: t, isRunning: false });
+      core.updateTrayTitle();
+      expect(t.setTitle).toHaveBeenCalledWith("🐢");
+    });
+
+    it("should show 🙂 when AI mode enabled and posture good", () => {
+      storeData.postureCheckEnabled = true;
       const t = { setTitle: vi.fn() };
       core.setState({ tray: t, isRunning: false });
       core.updateTrayTitle();
@@ -563,7 +571,13 @@ describe("createAppCore", () => {
     let mockTray;
     beforeEach(() => { mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: mockTray }); });
 
-    it("should show 🙂 as default icon", () => {
+    it("should show 🐢 as default icon in alarm-only mode", () => {
+      core.updateTrayTitle();
+      expect(mockTray.setTitle).toHaveBeenCalledWith("🐢");
+    });
+
+    it("should show 🙂 as default icon in AI mode", () => {
+      storeData.postureCheckEnabled = true;
       core.updateTrayTitle();
       expect(mockTray.setTitle).toHaveBeenCalledWith("🙂");
     });
@@ -577,23 +591,25 @@ describe("createAppCore", () => {
       expect(calls.some((c) => c.startsWith("🙌🏻"))).toBe(true);
     });
 
-    it("should restore 🙂 after 10 seconds stretch alert", () => {
+    it("should restore 🐢 after 10 seconds stretch alert in alarm-only mode", () => {
       core.startTimer(30);
       mockTray.setTitle.mockClear();
       core.sendAlert();
       vi.advanceTimersByTime(10500);
       const lastCall = mockTray.setTitle.mock.calls.at(-1)[0];
-      expect(lastCall).toContain("🙂");
+      expect(lastCall).toBe("🐢");
     });
 
-    it("should show 🐢 when bad posture detected", () => {
+    it("should show 🐢 when bad posture detected in AI mode", () => {
+      storeData.postureCheckEnabled = true;
       core.setPostureBad();
       const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls.some((c) => c.startsWith("🐢"))).toBe(true);
+      expect(calls.some((c) => c === "🐢")).toBe(true);
       expect(core.getState().badPosture).toBe(true);
     });
 
-    it("should restore 🙂 when posture corrected", () => {
+    it("should restore 🙂 when posture corrected in AI mode", () => {
+      storeData.postureCheckEnabled = true;
       core.setPostureBad();
       mockTray.setTitle.mockClear();
       core.setPostureGood();
