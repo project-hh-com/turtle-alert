@@ -67,8 +67,10 @@ app.whenReady().then(() => {
   });
   trayIcon.setTemplateImage(true);
   const tray = new Tray(trayIcon);
-  tray.setTitle("🐢");
+  tray.setTitle("🙂");
   tray.setToolTip("거북이경보");
+  tray.on("click", () => core.updateTrayMenu());
+  tray.on("right-click", () => core.updateTrayMenu());
   core.setState({ tray });
   core.updateTrayMenu();
 
