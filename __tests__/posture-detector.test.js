@@ -414,19 +414,19 @@ describe("evaluatePosture (with baseline)", () => {
 
   describe("거북목 감지 (편차 기반)", () => {
     it("should detect turtle neck when ratio drops more than threshold", () => {
-      // baseline ratio = 1.2, threshold drop = 0.15
-      // nose.y = 80 + 16 = 96 → ratio = (200-96)/100 = 1.04, drop = 0.16 > 0.15
+      // baseline ratio = 1.2, threshold drop = 0.07
+      // nose.y = 80 + 8 = 88 → ratio = (200-88)/100 = 1.12, drop = 0.08 > 0.07
       const kps = createKeypoints({
-        nose: { name: "nose", x: 160, y: 96, score: 0.9 },
+        nose: { name: "nose", x: 160, y: 88, score: 0.9 },
       });
       const result = evaluatePosture(kps, baseline);
       expect(result.issues).toContain("거북목");
     });
 
     it("should not detect when ratio drop is within threshold", () => {
-      // nose.y = 90 → ratio = 1.1, drop = 0.1 < 0.15
+      // nose.y = 84 → ratio = (200-84)/100 = 1.16, drop = 0.04 < 0.07
       const kps = createKeypoints({
-        nose: { name: "nose", x: 160, y: 90, score: 0.9 },
+        nose: { name: "nose", x: 160, y: 84, score: 0.9 },
       });
       const result = evaluatePosture(kps, baseline);
       expect(result.issues).not.toContain("거북목");
@@ -494,10 +494,10 @@ describe("evaluatePosture (with baseline)", () => {
     });
 
     it("should not detect when width increase is small", () => {
-      // width: |100 - 220| = 120, increase = 0.2 < 0.25
+      // width: |105 - 215| = 110, increase = 0.1 < 0.15
       const kps = createKeypoints({
-        left_shoulder: { name: "left_shoulder", x: 100, y: 200, score: 0.9 },
-        right_shoulder: { name: "right_shoulder", x: 220, y: 200, score: 0.9 },
+        left_shoulder: { name: "left_shoulder", x: 105, y: 200, score: 0.9 },
+        right_shoulder: { name: "right_shoulder", x: 215, y: 200, score: 0.9 },
       });
       const result = evaluatePosture(kps, baseline);
       expect(result.issues).not.toContain("화면에 너무 가까움");
@@ -560,11 +560,11 @@ describe("evaluatePosture (with baseline)", () => {
 
   describe("구부정한 자세 감지", () => {
     it("should detect slouch when ratio drops moderately", () => {
-      // baseline ratio = 1.2, slouch threshold = 0.10
-      // nose.y = 91 → ratio = (200-91)/100 = 1.09, drop = 0.11 > 0.10
-      // but drop < 0.15 so no 거북목
+      // baseline ratio = 1.2, slouch threshold = 0.05, turtle threshold = 0.07
+      // nose.y = 86 → ratio = (200-86)/100 = 1.14, drop = 0.06 > 0.05
+      // but drop < 0.07 so no 거북목
       const kps = createKeypoints({
-        nose: { name: "nose", x: 160, y: 91, score: 0.9 },
+        nose: { name: "nose", x: 160, y: 86, score: 0.9 },
       });
       const result = evaluatePosture(kps, baseline);
       expect(result.issues).toContain("구부정한 자세");
@@ -572,9 +572,9 @@ describe("evaluatePosture (with baseline)", () => {
     });
 
     it("should not show slouch when turtle neck is detected", () => {
-      // drop > 0.15 → 거북목 detected, 구부정한 자세 should not duplicate
+      // drop > 0.07 → 거북목 detected, 구부정한 자세 should not duplicate
       const kps = createKeypoints({
-        nose: { name: "nose", x: 160, y: 96, score: 0.9 },
+        nose: { name: "nose", x: 160, y: 88, score: 0.9 },
       });
       const result = evaluatePosture(kps, baseline);
       expect(result.issues).toContain("거북목");
@@ -905,14 +905,14 @@ describe("상수 값 확인", () => {
   });
 
   it("should have correct deviation threshold values", () => {
-    expect(DEVIATION_THRESHOLD.noseShoulderRatioDrop).toBe(0.15);
-    expect(DEVIATION_THRESHOLD.shoulderTiltIncrease).toBe(0.05);
-    expect(DEVIATION_THRESHOLD.headRotationConfidenceDiff).toBe(0.4);
-    expect(DEVIATION_THRESHOLD.shoulderWidthIncrease).toBe(0.25);
-    expect(DEVIATION_THRESHOLD.headTiltIncrease).toBe(0.06);
-    expect(DEVIATION_THRESHOLD.noseCenterOffset).toBe(0.08);
-    expect(DEVIATION_THRESHOLD.slouchRatioDrop).toBe(0.10);
-    expect(DEVIATION_THRESHOLD.earForwardRatioDrop).toBe(0.15);
+    expect(DEVIATION_THRESHOLD.noseShoulderRatioDrop).toBe(0.07);
+    expect(DEVIATION_THRESHOLD.shoulderTiltIncrease).toBe(0.03);
+    expect(DEVIATION_THRESHOLD.headRotationConfidenceDiff).toBe(0.3);
+    expect(DEVIATION_THRESHOLD.shoulderWidthIncrease).toBe(0.15);
+    expect(DEVIATION_THRESHOLD.headTiltIncrease).toBe(0.03);
+    expect(DEVIATION_THRESHOLD.noseCenterOffset).toBe(0.05);
+    expect(DEVIATION_THRESHOLD.slouchRatioDrop).toBe(0.05);
+    expect(DEVIATION_THRESHOLD.earForwardRatioDrop).toBe(0.07);
   });
 
   it("should have MIN_KEYPOINT_SCORE of 0.3", () => {
