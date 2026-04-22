@@ -269,13 +269,13 @@ describe("createAppCore", () => {
     it("should show stop when running", () => {
       const t = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: t, isRunning: true });
       core.updateTrayMenu();
-      expect(mockMenu.buildFromTemplate.mock.calls.at(-1)[0].find((i) => i.label === "중지" || i.label === "시작").label).toBe("중지");
+      expect(mockMenu.buildFromTemplate.mock.calls.at(-1)[0].find((i) => typeof i.label === "string" && i.label.includes("중지")).label).toBe("⏸ 중지");
     });
 
     it("should show start when stopped", () => {
       const t = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: t, isRunning: false });
       core.updateTrayMenu();
-      expect(mockMenu.buildFromTemplate.mock.calls.at(-1)[0].find((i) => i.label === "중지" || i.label === "시작").label).toBe("시작");
+      expect(mockMenu.buildFromTemplate.mock.calls.at(-1)[0].find((i) => typeof i.label === "string" && i.label.includes("감시 시작")).label).toBe("🐢 감시 시작!");
     });
 
     it("should include stretch now button", () => {
@@ -336,18 +336,18 @@ describe("createAppCore", () => {
       expect(call.title).toBe("🐢 거북이경보 시작!");
       expect(storeData.alertCount).toBe(0);
     });
-    it("should disable 감시 시작 when running", () => {
+    it("should show 중지 when running", () => {
       core.startTimer(30);
-      const item = getTemplate().find((i) => i.label === "🐢 감시 시작!");
-      expect(item.enabled).toBe(false);
+      const item = getTemplate().find((i) => i.label === "⏸ 중지");
+      expect(item).toBeDefined();
     });
-    it("should enable 감시 시작 when stopped", () => {
+    it("should show 감시 시작 when stopped", () => {
       core.setState({ tray: mockTray, isRunning: false });
       const item = getTemplate().find((i) => i.label === "🐢 감시 시작!");
-      expect(item.enabled).toBe(true);
+      expect(item).toBeDefined();
     });
-    it("should start on click", () => { core.setState({ tray: mockTray, isRunning: false }); storeData.intervalMin = 15; getTemplate().find((i) => i.label === "시작").click(); expect(core.getState().isRunning).toBe(true); });
-    it("should stop on click", () => { core.startTimer(30); getTemplate().find((i) => i.label === "중지").click(); expect(core.getState().isRunning).toBe(false); });
+    it("should start on click", () => { core.setState({ tray: mockTray, isRunning: false }); storeData.intervalMin = 15; getTemplate().find((i) => i.label === "🐢 감시 시작!").click(); expect(core.getState().isRunning).toBe(true); });
+    it("should stop on click", () => { core.startTimer(30); getTemplate().find((i) => i.label === "⏸ 중지").click(); expect(core.getState().isRunning).toBe(false); });
     it("should start with submenu interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "45분").click(); expect(storeData.intervalMin).toBe(45); });
     it("should start with 15min interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "15분").click(); expect(storeData.intervalMin).toBe(15); });
     it("should start with 30min interval", () => { getTemplate().find((i) => i.label === "알림 간격").submenu.find((i) => i.label === "30분").click(); expect(storeData.intervalMin).toBe(30); });
@@ -472,22 +472,14 @@ describe("createAppCore", () => {
       expect(items[0].label).toBe("대기 중");
     });
 
-    it("should start timer via 감시 시작 button", () => {
-      const items = getMenuItems();
-      const startBtn = items.find((t) => t.label === "🐢 감시 시작!");
-      expect(startBtn.enabled).toBe(true);
-      startBtn.click();
-      expect(core.getState().isRunning).toBe(true);
-    });
-
-    it("should toggle timer via 시작/중지", () => {
+    it("should start and stop via 감시 시작/중지 button", () => {
       let items = getMenuItems();
-      const toggleBtn = items.find((t) => t.label === "시작");
-      toggleBtn.click();
+      const startBtn = items.find((t) => t.label === "🐢 감시 시작!");
+      startBtn.click();
       expect(core.getState().isRunning).toBe(true);
 
       items = getMenuItems();
-      const stopBtn = items.find((t) => t.label === "중지");
+      const stopBtn = items.find((t) => t.label === "⏸ 중지");
       stopBtn.click();
       expect(core.getState().isRunning).toBe(false);
     });

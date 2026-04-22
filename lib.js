@@ -314,27 +314,19 @@ function createAppCore(deps) {
         enabled: false,
       },
       {
-        label: "🐢 감시 시작!",
-        enabled: !isRunning,
-        click: () => {
-          startTimer(store.get("intervalMin"));
-          const notification = new Notification({
-            title: "🐢 거북이경보 시작!",
-            body: "지금부터 자세 감시 들어간다~ 거북이 되지 말자!",
-            silent: !store.get("soundEnabled"),
-            urgency: "critical",
-          });
-          notification.show();
-        },
-      },
-      { type: "separator" },
-      {
-        label: isRunning ? "중지" : "시작",
+        label: isRunning ? "⏸ 중지" : "🐢 감시 시작!",
         click: () => {
           if (isRunning) {
             stopTimer();
           } else {
-            startTimer(intervalMin);
+            startTimer(store.get("intervalMin"));
+            const notification = new Notification({
+              title: "🐢 거북이경보 시작!",
+              body: "지금부터 자세 감시 들어간다~ 거북이 되지 말자!",
+              silent: !store.get("soundEnabled"),
+              urgency: "critical",
+            });
+            notification.show();
           }
         },
       },
