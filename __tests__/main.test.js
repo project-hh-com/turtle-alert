@@ -175,11 +175,11 @@ describe("createAppCore", () => {
       expect(() => core.updateTrayTitle()).not.toThrow();
     });
 
-    it("should show countdown when running", () => {
+    it("should show icon only (no time) when running", () => {
       const t = { setTitle: vi.fn() };
       core.setState({ tray: t, isRunning: true, remainSec: 125 });
       core.updateTrayTitle();
-      expect(t.setTitle).toHaveBeenCalledWith("🙂 02:05");
+      expect(t.setTitle).toHaveBeenCalledWith("🙂");
     });
 
     it("should show default icon when stopped", () => {
@@ -229,7 +229,7 @@ describe("createAppCore", () => {
       const t = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: t, isRunning: true }); storeData.intervalMin = 30;
       core.updateTrayMenu();
       const tpl = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
-      expect(tpl[0].label).toContain("실행 중"); expect(tpl[0].label).toContain("30분");
+      expect(tpl[0].label).toContain("남음"); expect(tpl[0].label).toContain("30분");
     });
 
     it("should show waiting status", () => {
@@ -481,6 +481,20 @@ describe("createAppCore", () => {
       return mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
     }
 
+    it("should show remaining time in menu top when running", () => {
+      core.startTimer(30);
+      vi.advanceTimersByTime(1000);
+      const items = getMenuItems();
+      expect(items[0].label).toContain("남음");
+      expect(items[0].label).toContain(":");
+      expect(items[0].enabled).toBe(false);
+    });
+
+    it("should show 대기 중 in menu top when stopped", () => {
+      const items = getMenuItems();
+      expect(items[0].label).toBe("대기 중");
+    });
+
     it("should start timer via 감시 시작 button", () => {
       const items = getMenuItems();
       const startBtn = items.find((t) => t.label === "🐢 감시 시작!");
@@ -620,13 +634,13 @@ describe("createAppCore", () => {
       expect(core.getState().badPosture).toBe(false);
     });
 
-    it("should show 🐢 with timer when running and bad posture", () => {
+    it("should show 🐢 icon only when running and bad posture", () => {
       core.startTimer(30);
       mockTray.setTitle.mockClear();
       core.setPostureBad();
       vi.advanceTimersByTime(1000);
       const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls.some((c) => c.startsWith("🐢") && c.includes(":"))).toBe(true);
+      expect(calls.some((c) => c === "🐢")).toBe(true);
     });
 
     it("should prioritize 🙌🏻 over 🐢 during stretch alert", () => {

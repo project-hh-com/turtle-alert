@@ -259,12 +259,7 @@ function createAppCore(deps) {
 
   function updateTrayTitle() {
     if (!tray) return;
-    const icon = getTrayIcon();
-    if (isRunning) {
-      tray.setTitle(`${icon} ${formatTime(remainSec)}`);
-    } else {
-      tray.setTitle(icon);
-    }
+    tray.setTitle(getTrayIcon());
   }
 
   function startTimer(intervalMin) {
@@ -314,7 +309,9 @@ function createAppCore(deps) {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: isRunning ? `실행 중 — ${intervalMin}분 간격` : "대기 중",
+        label: isRunning
+          ? `⏱ ${formatTime(remainSec)} 남음 (${intervalMin}분 간격)`
+          : "대기 중",
         enabled: false,
       },
       {
