@@ -48,8 +48,10 @@ const {
   initDetector,
   captureAndAnalyze,
   captureCalibrationFrames,
-  calibrate,
   disposeDetector,
+} = require("./lib/posture-capture");
+const {
+  calibrate,
   DEFAULT_CHECK_INTERVAL_SEC,
   CONSECUTIVE_BAD_THRESHOLD,
 } = require("./lib/posture-detector");

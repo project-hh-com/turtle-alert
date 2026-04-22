@@ -8,11 +8,14 @@ const {
   DEVIATION_THRESHOLD,
   MIN_KEYPOINT_SCORE,
   CONSECUTIVE_BAD_THRESHOLD,
+  DEFAULT_CHECK_INTERVAL_SEC,
+} = require("../lib/posture-detector.js");
+
+const {
   CAPTURE_WIDTH,
   CAPTURE_HEIGHT,
-  DEFAULT_CHECK_INTERVAL_SEC,
   CALIBRATION_FRAME_COUNT,
-} = await import("../lib/posture-detector.js");
+} = require("../lib/posture-capture.js");
 
 // ===== 테스트 헬퍼 =====
 
