@@ -47,6 +47,8 @@ const { execFile } = require("child_process");
 const {
   initDetector,
   captureAndAnalyze,
+  captureCalibrationFrames,
+  calibrate,
   disposeDetector,
   DEFAULT_CHECK_INTERVAL_SEC,
   CONSECUTIVE_BAD_THRESHOLD,
@@ -169,6 +171,8 @@ function createAppCore(deps) {
   let postureDetectorReady = false;
   let postureDetectorLoading = false;
   let consecutiveBadCount = 0;
+  let calibrationInProgress = false;
+  let baseline = store.get("calibrationData") || null;
 
   // 앱 시작 시 imagesnap 존재 여부 확인
   checkImagesnap().then((available) => {
@@ -398,6 +402,21 @@ function createAppCore(deps) {
         },
       },
       {
+        label: calibrationInProgress
+          ? "  📐 기준 자세 설정 중..."
+          : baseline
+            ? "  📐 기준 자세 재설정"
+            : "  📐 기준 자세 설정",
+        enabled: imagesnapAvailable && postureDetectorReady && !calibrationInProgress,
+        click: () => runCalibration(),
+      },
+      {
+        label: baseline
+          ? `    마지막 캘리브레이션: ${new Date(baseline.timestamp).toLocaleDateString()}`
+          : "    (캘리브레이션 없이도 동작하지만, 설정하면 더 정확해요)",
+        enabled: false,
+      },
+      {
         label: "  📂 스냅샷 폴더 열기",
         click: () => {
           const savePath = store.get("snapshotSavePath");
@@ -451,6 +470,26 @@ function createAppCore(deps) {
       title: "🚨 고개가 앞으로 나왔어요!",
       body: "😮 모니터에 너무 가까이 다가갔어요. 등을 의자에 붙이고 모니터와 팔 길이 거리를 유지하세요.",
     },
+    "고개 회전": {
+      title: "🚨 고개가 돌아갔어요!",
+      body: "🔄 고개가 한쪽으로 많이 돌아갔어요. 모니터를 정면으로 바라보세요.",
+    },
+    "화면에 너무 가까움": {
+      title: "🚨 모니터에 너무 가까워요!",
+      body: "📏 화면에 너무 가까이 다가갔어요. 등을 의자에 붙이고 팔 길이 거리를 유지하세요.",
+    },
+    "고개 기울어짐": {
+      title: "🚨 고개가 기울었어요!",
+      body: "↗️ 고개가 한쪽으로 기울었어요. 양쪽 귀 높이를 맞추고 바르게 앉으세요.",
+    },
+    "한쪽으로 기울어짐": {
+      title: "🚨 몸이 기울었어요!",
+      body: "⚖️ 몸이 한쪽으로 기울었어요. 모니터 정면에 앉아주세요.",
+    },
+    "구부정한 자세": {
+      title: "🚨 자세가 구부정해졌어요!",
+      body: "📐 점점 웅크리고 있어요! 허리를 펴고 등을 의자에 붙이세요.",
+    },
   };
 
   /* v8 ignore start — tfjs 의존 함수, captureAndAnalyze 모킹 불가 */
@@ -460,6 +499,57 @@ function createAppCore(deps) {
     const success = await initDetector();
     postureDetectorReady = success;
     postureDetectorLoading = false;
+    updateTrayMenu();
+  }
+
+  async function runCalibration() {
+    if (calibrationInProgress || !postureDetectorReady) return;
+    calibrationInProgress = true;
+    updateTrayMenu();
+
+    const prepNotice = new Notification({
+      title: "📐 기준 자세 설정",
+      body: "바른 자세로 앉아주세요. 3초 후 기준 자세를 기록합니다.",
+      silent: false,
+      urgency: "critical",
+    });
+    prepNotice.show();
+
+    await new Promise((r) => setTimeout(r, 3000));
+
+    try {
+      const frames = await captureCalibrationFrames();
+      const result = calibrate(frames);
+      if (result) {
+        baseline = result;
+        store.set("calibrationData", result);
+        const doneNotice = new Notification({
+          title: "✅ 기준 자세 설정 완료!",
+          body: "기준 자세가 저장되었습니다. 이제 더 정확하게 자세를 감시합니다.",
+          silent: false,
+          urgency: "critical",
+        });
+        doneNotice.show();
+      } else {
+        const failNotice = new Notification({
+          title: "❌ 기준 자세 설정 실패",
+          body: "카메라에서 자세를 인식하지 못했습니다. 카메라 앞에서 다시 시도해주세요.",
+          silent: false,
+          urgency: "critical",
+        });
+        failNotice.show();
+      }
+    } catch {
+      const failNotice = new Notification({
+        title: "❌ 기준 자세 설정 실패",
+        body: "촬영 중 오류가 발생했습니다. 다시 시도해주세요.",
+        silent: false,
+        urgency: "critical",
+      });
+      failNotice.show();
+    }
+
+    calibrationInProgress = false;
     updateTrayMenu();
   }
 
@@ -486,7 +576,7 @@ function createAppCore(deps) {
     if (!postureDetectorReady) return;
 
     try {
-      const result = await captureAndAnalyze();
+      const result = await captureAndAnalyze(baseline);
       if (!result.isGood && result.issues.length > 0 && !result.issues.includes("키포인트 신뢰도 부족")) {
         consecutiveBadCount++;
         if (consecutiveBadCount >= CONSECUTIVE_BAD_THRESHOLD) {
@@ -539,7 +629,8 @@ function createAppCore(deps) {
     loadPostureDetector,
     startPostureCheck,
     stopPostureCheck,
-    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading }),
+    runCalibration,
+    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading, calibrationInProgress, baseline }),
     setState: (state) => {
       if ("timer" in state) timer = state.timer;
       if ("remainSec" in state) remainSec = state.remainSec;

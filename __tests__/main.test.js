@@ -381,7 +381,7 @@ describe("createAppCore", () => {
   });
 
   describe("getState / setState", () => {
-    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); });
+    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); expect(s).toHaveProperty("calibrationInProgress"); expect(s).toHaveProperty("baseline"); });
     it("should update partial", () => { core.setState({ remainSec: 42, isRunning: true }); expect(core.getState().remainSec).toBe(42); expect(core.getState().isRunning).toBe(true); });
   });
 
@@ -416,6 +416,18 @@ describe("createAppCore", () => {
 
     it("should have postureDetectorLoading=false initially", () => {
       expect(core.getState().postureDetectorLoading).toBe(false);
+    });
+
+    it("should have calibrationInProgress=false initially", () => {
+      expect(core.getState().calibrationInProgress).toBe(false);
+    });
+
+    it("should have baseline=null initially", () => {
+      expect(core.getState().baseline).toBeNull();
+    });
+
+    it("should expose runCalibration", () => {
+      expect(core.runCalibration).toBeTypeOf("function");
     });
   });
 });

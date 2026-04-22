@@ -49,6 +49,7 @@ app.whenReady().then(() => {
       snapshotRetentionDays: 30,
       postureCheckEnabled: false,
       postureCheckInterval: 60,
+      calibrationData: null,
     },
     clearInvalidConfig: true,
   });
