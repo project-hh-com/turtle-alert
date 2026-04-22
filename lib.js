@@ -277,6 +277,7 @@ function createAppCore(deps) {
         remainSec = intervalMin * 60;
       }
       updateTrayTitle();
+      updateTrayMenu();
     }, 1000);
 
     updateTrayTitle();
