@@ -170,6 +170,7 @@ function createAppCore(deps) {
   let snapshotFailCount = 0;
   let imagesnapAvailable = false;
   let alertFlashTimer = null;
+  let badPosture = false;
   let postureTimer = null;
   let postureDetectorReady = false;
   let postureDetectorLoading = false;
@@ -196,7 +197,7 @@ function createAppCore(deps) {
     });
 
     notification.show();
-    flashTrayAlert();
+    flashStretchAlert();
 
     // 스냅샷 촬영 (fire-and-forget)
     if (store.get("snapshotEnabled")) {
@@ -224,26 +225,41 @@ function createAppCore(deps) {
     updateTrayMenu();
   }
 
-  function flashTrayAlert() {
+  function flashStretchAlert() {
     if (!tray) return;
     if (alertFlashTimer) {
       clearTimeout(alertFlashTimer);
       alertFlashTimer = null;
     }
 
-    const ALERT_DURATION_MS = 5000;
+    const STRETCH_ICON_DURATION_MS = 10000;
     alertFlashTimer = setTimeout(() => {
       alertFlashTimer = null;
       updateTrayTitle();
-    }, ALERT_DURATION_MS);
+    }, STRETCH_ICON_DURATION_MS);
 
-    // 즉시 경보 아이콘으로 전환 (타이머는 계속 표시)
     updateTrayTitle();
+  }
+
+  function setPostureBad() {
+    badPosture = true;
+    updateTrayTitle();
+  }
+
+  function setPostureGood() {
+    badPosture = false;
+    updateTrayTitle();
+  }
+
+  function getTrayIcon() {
+    if (alertFlashTimer) return "🙌🏻";
+    if (badPosture) return "🐢";
+    return "🙂";
   }
 
   function updateTrayTitle() {
     if (!tray) return;
-    const icon = alertFlashTimer ? "🚨" : "🐢";
+    const icon = getTrayIcon();
     if (isRunning) {
       tray.setTitle(`${icon} ${formatTime(remainSec)}`);
     } else {
@@ -596,7 +612,7 @@ function createAppCore(deps) {
       urgency: "critical",
     });
     notification.show();
-    flashTrayAlert();
+    setPostureBad();
   }
 
   async function runPostureCheck() {
@@ -612,6 +628,9 @@ function createAppCore(deps) {
         }
       } else {
         consecutiveBadCount = 0;
+        if (badPosture) {
+          setPostureGood();
+        }
       }
     } catch {
       // 촬영/분석 실패 시 무시 (카메라 사용 중 등)
@@ -657,7 +676,9 @@ function createAppCore(deps) {
     startPostureCheck,
     stopPostureCheck,
     runCalibration,
-    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading, calibrationInProgress, baseline }),
+    setPostureBad,
+    setPostureGood,
+    getState: () => ({ timer, remainSec, isRunning, tray, nextAlertTime, imagesnapAvailable, snapshotFailCount, postureDetectorReady, postureDetectorLoading, calibrationInProgress, baseline, badPosture }),
     setState: (state) => {
       if ("timer" in state) timer = state.timer;
       if ("remainSec" in state) remainSec = state.remainSec;

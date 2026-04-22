@@ -179,14 +179,14 @@ describe("createAppCore", () => {
       const t = { setTitle: vi.fn() };
       core.setState({ tray: t, isRunning: true, remainSec: 125 });
       core.updateTrayTitle();
-      expect(t.setTitle).toHaveBeenCalledWith("🐢 02:05");
+      expect(t.setTitle).toHaveBeenCalledWith("🙂 02:05");
     });
 
-    it("should show turtle only when stopped", () => {
+    it("should show default icon when stopped", () => {
       const t = { setTitle: vi.fn() };
       core.setState({ tray: t, isRunning: false });
       core.updateTrayTitle();
-      expect(t.setTitle).toHaveBeenCalledWith("🐢");
+      expect(t.setTitle).toHaveBeenCalledWith("🙂");
     });
   });
 
@@ -381,7 +381,7 @@ describe("createAppCore", () => {
   });
 
   describe("getState / setState", () => {
-    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); expect(s).toHaveProperty("calibrationInProgress"); expect(s).toHaveProperty("baseline"); });
+    it("should return state", () => { const s = core.getState(); expect(s).toHaveProperty("timer"); expect(s).toHaveProperty("remainSec"); expect(s).toHaveProperty("isRunning"); expect(s).toHaveProperty("tray"); expect(s).toHaveProperty("nextAlertTime"); expect(s).toHaveProperty("postureDetectorReady"); expect(s).toHaveProperty("postureDetectorLoading"); expect(s).toHaveProperty("calibrationInProgress"); expect(s).toHaveProperty("baseline"); expect(s).toHaveProperty("badPosture"); });
     it("should update partial", () => { core.setState({ remainSec: 42, isRunning: true }); expect(core.getState().remainSec).toBe(42); expect(core.getState().isRunning).toBe(true); });
   });
 
@@ -578,50 +578,72 @@ describe("createAppCore", () => {
     });
   });
 
-  describe("flashTrayAlert", () => {
+  describe("tray icon states", () => {
     let mockTray;
     beforeEach(() => { mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() }; core.setState({ tray: mockTray }); });
 
-    it("should show alert icon on sendAlert", () => {
-      core.sendAlert();
-      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls.some((c) => c.startsWith("🚨"))).toBe(true);
+    it("should show 🙂 as default icon", () => {
+      core.updateTrayTitle();
+      expect(mockTray.setTitle).toHaveBeenCalledWith("🙂");
     });
 
-    it("should show alert icon with timer during alert period", () => {
+    it("should show 🙌🏻 for 10 seconds on stretch alert", () => {
       core.startTimer(30);
       mockTray.setTitle.mockClear();
       core.sendAlert();
-      // 타이머 틱 후에도 🚨 아이콘 유지 + 시간 표시
       vi.advanceTimersByTime(1000);
       const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls.some((c) => c.startsWith("🚨") && c.includes(":"))).toBe(true);
+      expect(calls.some((c) => c.startsWith("🙌🏻"))).toBe(true);
     });
 
-    it("should restore turtle icon after 5 seconds", () => {
+    it("should restore 🙂 after 10 seconds stretch alert", () => {
       core.startTimer(30);
       mockTray.setTitle.mockClear();
       core.sendAlert();
-      vi.advanceTimersByTime(5500);
+      vi.advanceTimersByTime(10500);
       const lastCall = mockTray.setTitle.mock.calls.at(-1)[0];
-      expect(lastCall).toContain("🐢");
+      expect(lastCall).toContain("🙂");
     });
 
-    it("should cancel previous alert timer when new alert fires", () => {
-      core.sendAlert();
+    it("should show 🐢 when bad posture detected", () => {
+      core.setPostureBad();
+      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
+      expect(calls.some((c) => c.startsWith("🐢"))).toBe(true);
+      expect(core.getState().badPosture).toBe(true);
+    });
+
+    it("should restore 🙂 when posture corrected", () => {
+      core.setPostureBad();
+      mockTray.setTitle.mockClear();
+      core.setPostureGood();
+      expect(mockTray.setTitle).toHaveBeenCalledWith("🙂");
+      expect(core.getState().badPosture).toBe(false);
+    });
+
+    it("should show 🐢 with timer when running and bad posture", () => {
+      core.startTimer(30);
+      mockTray.setTitle.mockClear();
+      core.setPostureBad();
+      vi.advanceTimersByTime(1000);
+      const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
+      expect(calls.some((c) => c.startsWith("🐢") && c.includes(":"))).toBe(true);
+    });
+
+    it("should prioritize 🙌🏻 over 🐢 during stretch alert", () => {
+      core.setPostureBad();
       mockTray.setTitle.mockClear();
       core.sendAlert();
       const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls.some((c) => c.startsWith("🚨"))).toBe(true);
+      expect(calls.some((c) => c.startsWith("🙌🏻"))).toBe(true);
     });
 
-    it("should clear alert on stopTimer", () => {
+    it("should clear stretch icon on stopTimer", () => {
       core.startTimer(30);
       core.sendAlert();
       core.stopTimer();
       mockTray.setTitle.mockClear();
-      vi.advanceTimersByTime(5500);
-      expect(mockTray.setTitle).not.toHaveBeenCalledWith(expect.stringContaining("🚨"));
+      vi.advanceTimersByTime(10500);
+      expect(mockTray.setTitle).not.toHaveBeenCalledWith(expect.stringContaining("🙌🏻"));
     });
   });
 });
