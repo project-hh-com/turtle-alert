@@ -175,11 +175,11 @@ describe("createAppCore", () => {
       expect(() => core.updateTrayTitle()).not.toThrow();
     });
 
-    it("should show icon only (no time) when running", () => {
+    it("should show icon with time when running", () => {
       const t = { setTitle: vi.fn() };
       core.setState({ tray: t, isRunning: true, remainSec: 125 });
       core.updateTrayTitle();
-      expect(t.setTitle).toHaveBeenCalledWith("🙂");
+      expect(t.setTitle).toHaveBeenCalledWith("🙂 02:05");
     });
 
     it("should show default icon when stopped", () => {
@@ -605,13 +605,13 @@ describe("createAppCore", () => {
       expect(core.getState().badPosture).toBe(false);
     });
 
-    it("should show 🐢 icon only when running and bad posture", () => {
+    it("should show 🐢 with time when running and bad posture", () => {
       core.startTimer(30);
       mockTray.setTitle.mockClear();
       core.setPostureBad();
       vi.advanceTimersByTime(1000);
       const calls = mockTray.setTitle.mock.calls.map((c) => c[0]);
-      expect(calls.some((c) => c === "🐢")).toBe(true);
+      expect(calls.some((c) => c.startsWith("🐢") && c.includes(":"))).toBe(true);
     });
 
     it("should prioritize 🙌🏻 over 🐢 during stretch alert", () => {

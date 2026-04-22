@@ -255,7 +255,12 @@ function createAppCore(deps) {
 
   function updateTrayTitle() {
     if (!tray) return;
-    tray.setTitle(getTrayIcon());
+    const icon = getTrayIcon();
+    if (isRunning) {
+      tray.setTitle(`${icon} ${formatTime(remainSec)}`);
+    } else {
+      tray.setTitle(icon);
+    }
   }
 
   function startTimer(intervalMin) {
