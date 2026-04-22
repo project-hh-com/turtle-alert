@@ -167,6 +167,7 @@ function createAppCore(deps) {
   let nextAlertTime = 0;
   let snapshotFailCount = 0;
   let imagesnapAvailable = false;
+  let alertFlashTimer = null;
   let postureTimer = null;
   let postureDetectorReady = false;
   let postureDetectorLoading = false;
@@ -193,6 +194,7 @@ function createAppCore(deps) {
     });
 
     notification.show();
+    flashTrayAlert();
 
     // 스냅샷 촬영 (fire-and-forget)
     if (store.get("snapshotEnabled")) {
@@ -220,8 +222,36 @@ function createAppCore(deps) {
     updateTrayMenu();
   }
 
+  function flashTrayAlert() {
+    if (!tray) return;
+    if (alertFlashTimer) {
+      clearInterval(alertFlashTimer);
+      alertFlashTimer = null;
+    }
+
+    const FLASH_DURATION_MS = 5000;
+    const FLASH_INTERVAL_MS = 500;
+    let visible = true;
+    const startTime = Date.now();
+
+    alertFlashTimer = setInterval(() => {
+      if (Date.now() - startTime >= FLASH_DURATION_MS) {
+        clearInterval(alertFlashTimer);
+        alertFlashTimer = null;
+        updateTrayTitle();
+        return;
+      }
+      visible = !visible;
+      tray.setTitle(visible ? "🚨 스트레칭!" : "");
+    }, FLASH_INTERVAL_MS);
+
+    tray.setTitle("🚨 스트레칭!");
+  }
+
   function updateTrayTitle() {
     if (!tray) return;
+    // 깜빡임 중이면 건드리지 않음
+    if (alertFlashTimer) return;
     if (isRunning) {
       tray.setTitle(`🐢 ${formatTime(remainSec)}`);
     } else {
@@ -254,6 +284,10 @@ function createAppCore(deps) {
     if (timer) {
       clearInterval(timer);
       timer = null;
+    }
+    if (alertFlashTimer) {
+      clearInterval(alertFlashTimer);
+      alertFlashTimer = null;
     }
     isRunning = false;
     remainSec = 0;
@@ -570,6 +604,7 @@ function createAppCore(deps) {
       urgency: "critical",
     });
     notification.show();
+    flashTrayAlert();
   }
 
   async function runPostureCheck() {
