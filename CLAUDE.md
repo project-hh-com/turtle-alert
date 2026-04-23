@@ -109,6 +109,16 @@ pnpm release:tag 0.6.0    # 명시적 버전
 
 **자산명 규칙 (절대 어기지 말 것)**: 항상 `TurtleAlert-arm64.dmg`, `TurtleAlert-x64.dmg` (버전 없음). [DOWNLOAD.md](DOWNLOAD.md) / [README.md](README.md)의 `releases/latest/download/` 링크가 깨지지 않게 하기 위함. CI workflow와 [scripts/release.sh](scripts/release.sh)는 이미 이 규칙을 따르고 있음.
 
+**릴리즈 노트 작성**:
+1. 태그 push 후 CI가 `--generate-notes`로 자동 노트 생성. 이건 임시 채움이고, 사람이 다시 정리하는 것이 원칙.
+2. [.github/RELEASE_NOTES_TEMPLATE.md](.github/RELEASE_NOTES_TEMPLATE.md)를 복사해서 채우고 빈 섹션은 삭제.
+3. 적용:
+   ```bash
+   gh release edit vX.Y.Z --notes "$(cat .github/RELEASE_NOTES_TEMPLATE.md | sed 's/{VERSION}/X.Y.Z/g; s/{PREV_VERSION}/A.B.C/g')"
+   ```
+   또는 손으로 채운 텍스트를 직접 `--notes`에 전달.
+4. 변경 내역은 `git log --oneline vPREV..vCURR`로 추출 후 사용자 관점으로 요약 (커밋 메시지 그대로 옮기지 말 것).
+
 ### 5-3-1. 로컬 빌드/업로드 (수동, 디버깅용)
 
 CI가 실패하거나 로컬 검증이 필요할 때만 사용:
