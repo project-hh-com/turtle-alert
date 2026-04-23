@@ -49,6 +49,7 @@ const {
   DEFAULT_CHECK_INTERVAL_SEC,
   CONSECUTIVE_BAD_THRESHOLD,
 } = require("./lib/posture-detector");
+const { getImagesnapPath } = require("./lib/imagesnap-path");
 
 const SNAPSHOT_CONSECUTIVE_FAIL_LIMIT = 3;
 
@@ -58,6 +59,11 @@ const SNAPSHOT_CONSECUTIVE_FAIL_LIMIT = 3;
  */
 function checkImagesnap() {
   return new Promise((resolve) => {
+    const imagesnap = getImagesnapPath();
+    if (imagesnap !== "imagesnap") {
+      resolve(true);
+      return;
+    }
     execFile("which", ["imagesnap"], (err) => {
       resolve(!err);
     });
@@ -77,7 +83,7 @@ function captureSnapshot(savePath) {
   const filepath = path.join(savePath, filename);
 
   return new Promise((resolve, reject) => {
-    execFile("imagesnap", ["-q", filepath], (err) => {
+    execFile(getImagesnapPath(), ["-q", filepath], (err) => {
       if (err) return reject(err);
       resolve(filepath);
     });
@@ -399,7 +405,7 @@ function createAppCore(deps) {
       {
         label: imagesnapAvailable
           ? `자세 스냅샷 (카메라)${store.get("snapshotEnabled") ? " 📸" : ""}`
-          : "자세 스냅샷 (imagesnap 필요)",
+          : "자세 스냅샷 (카메라 사용 불가)",
         type: "checkbox",
         checked: store.get("snapshotEnabled"),
         enabled: imagesnapAvailable,
@@ -441,7 +447,7 @@ function createAppCore(deps) {
             label: postureDetectorLoading
               ? "🤖 AI 자세 검사 (모델 로딩 중...)"
               : !imagesnapAvailable
-                ? "🤖 AI 자세 검사 (imagesnap 필요)"
+                ? "🤖 AI 자세 검사 (카메라 사용 불가)"
                 : "🤖 AI 자세 검사 (알림 + 카메라)",
             type: "radio",
             checked: store.get("postureCheckEnabled") || false,

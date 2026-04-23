@@ -16,6 +16,7 @@ export default defineConfig({
     },
     env: {
       NODE_ENV: "test",
+      TURTLE_IMAGESNAP_PATH: "/nonexistent/imagesnap-test-binary",
     },
   },
 });

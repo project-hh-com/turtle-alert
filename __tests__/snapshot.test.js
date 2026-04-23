@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 
+// imagesnap 경로는 vitest.config.js의 TURTLE_IMAGESNAP_PATH로 비실존 경로로 설정됨
+
 const {
   captureSnapshot,
   cleanOldSnapshots,

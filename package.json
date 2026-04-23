@@ -41,6 +41,12 @@
       "lib.js",
       "lib/",
       "assets/"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/imagesnap",
+        "to": "vendor/imagesnap"
+      }
     ]
   },
   "pnpm": {
