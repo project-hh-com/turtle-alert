@@ -25,21 +25,28 @@ jobs:
       - name: Build DMGs (x64 + arm64)
         run: npx electron-builder --mac --x64 --arm64 --publish never
 
+      - name: Rename DMGs to version-less names
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release
+          cp "dist/TurtleAlert-${VERSION}-arm64.dmg" "release/TurtleAlert-arm64.dmg"
+          cp "dist/TurtleAlert-${VERSION}.dmg"       "release/TurtleAlert-x64.dmg"
+          ls -lh release/
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
             echo "Release $GITHUB_REF_NAME already exists — uploading assets only"
             gh release upload "$GITHUB_REF_NAME" \
-              "dist/TurtleAlert-${VERSION}-arm64.dmg#TurtleAlert-arm64.dmg" \
-              "dist/TurtleAlert-${VERSION}.dmg#TurtleAlert-x64.dmg" \
+              release/TurtleAlert-arm64.dmg \
+              release/TurtleAlert-x64.dmg \
               --clobber
           else
             gh release create "$GITHUB_REF_NAME" \
-              "dist/TurtleAlert-${VERSION}-arm64.dmg#TurtleAlert-arm64.dmg" \
-              "dist/TurtleAlert-${VERSION}.dmg#TurtleAlert-x64.dmg" \
+              release/TurtleAlert-arm64.dmg \
+              release/TurtleAlert-x64.dmg \
               --title "거북이경보 ${GITHUB_REF_NAME}" \
               --generate-notes
           fi
