@@ -44,7 +44,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "electron"
-    ]
+    ],
+    "overrides": {
+      "@xmldom/xmldom": ">=0.8.13"
+    }
   },
   "dependencies": {
     "@tensorflow-models/pose-detection": "^2.1.3",
