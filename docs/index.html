@@ -68,11 +68,30 @@
     }
     .badge {
       font-size: 13px;
-      padding: 4px 12px;
-      background: var(--bg-soft);
-      border: 1px solid var(--border);
+      font-weight: 500;
+      padding: 5px 14px;
       border-radius: 999px;
-      color: var(--text-dim);
+      border: 1px solid transparent;
+    }
+    .badge-mac {
+      background: rgba(74, 222, 128, 0.12);
+      border-color: rgba(74, 222, 128, 0.35);
+      color: #86efac;
+    }
+    .badge-chip {
+      background: rgba(125, 211, 252, 0.12);
+      border-color: rgba(125, 211, 252, 0.35);
+      color: #7dd3fc;
+    }
+    .badge-oss {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.35);
+      color: #fcd34d;
+    }
+    .badge-free {
+      background: rgba(244, 114, 182, 0.12);
+      border-color: rgba(244, 114, 182, 0.4);
+      color: #f9a8d4;
     }
 
     /* Download buttons */
@@ -231,10 +250,10 @@
     <p class="tagline">"어휴~ 거북이되겠다~"</p>
     <p class="subtagline">macOS 메뉴바에서 주기적으로 자세 교정을 일러주는 잔소리형 알림 앱</p>
     <div class="badges">
-      <span class="badge">macOS</span>
-      <span class="badge">Apple Silicon & Intel</span>
-      <span class="badge">오픈소스</span>
-      <span class="badge">무료</span>
+      <span class="badge badge-mac">macOS</span>
+      <span class="badge badge-chip">Apple Silicon & Intel</span>
+      <span class="badge badge-oss">오픈소스</span>
+      <span class="badge badge-free">무료</span>
     </div>
     <div class="downloads">
       <a href="https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-arm64.dmg" class="btn btn-primary">
