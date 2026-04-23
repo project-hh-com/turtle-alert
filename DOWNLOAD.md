@@ -26,8 +26,8 @@ brew uninstall --cask --zap turtle-alert  # 설정/로그까지 전부 삭제
 
 | 파일 | 크기 | 대상 |
 |---|---|---|
-| 🍎 [**Apple Silicon**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1-arm64.dmg) | 109MB | M1/M2/M3/M4 |
-| 💻 [**Intel**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.3.1.dmg) | 114MB | Intel Mac |
+| 🍎 [**Apple Silicon**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.5.0-arm64.dmg) | 162MB | M1/M2/M3/M4 |
+| 💻 [**Intel**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-0.5.0.dmg) | 167MB | Intel Mac |
 
 터미널에서 내 칩 확인:
 ```bash
