@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>거북이경보 — 어휴~ 거북이되겠다~</title>
+  <meta name="description" content="주기적으로 자세를 교정해주는 macOS 메뉴바 앱. 잔소리 톤 알림으로 거북목 방지." />
+  <meta property="og:title" content="거북이경보 — 자세 교정 잔소리 앱" />
+  <meta property="og:description" content="어휴~ 거북이되겠다~ macOS 메뉴바에서 주기적으로 스트레칭을 일러주는 앱" />
+  <meta property="og:image" content="https://dahee90522.github.io/turtle-alert/icon.png" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/png" href="icon.png" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --bg-soft: #1a2028;
+      --card: #1f2630;
+      --border: #2d3642;
+      --text: #e8eef5;
+      --text-dim: #9aa5b1;
+      --accent: #4ade80;
+      --accent-hover: #22c55e;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro KR", "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 24px 60px;
+      text-align: center;
+      background: radial-gradient(ellipse at top, #1e2a38 0%, var(--bg) 60%);
+    }
+    .hero .icon {
+      width: 128px; height: 128px;
+      margin: 0 auto 24px;
+      display: block;
+      filter: drop-shadow(0 8px 24px rgba(74, 222, 128, 0.15));
+    }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .hero .tagline {
+      font-size: 20px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .hero .subtagline {
+      font-size: 16px;
+      color: var(--text-dim);
+      opacity: 0.7;
+      margin-bottom: 40px;
+    }
+    .badges {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .badge {
+      font-size: 13px;
+      padding: 4px 12px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-dim);
+    }
+
+    /* Download buttons */
+    .downloads {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.1s, background 0.15s;
+      border: 1px solid transparent;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: var(--accent);
+      color: #0a1f14;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: var(--bg-soft); }
+
+    /* Sections */
+    section { padding: 60px 0; }
+    section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+    section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--text);
+    }
+    p { color: var(--text-dim); margin-bottom: 12px; }
+    a { color: var(--accent); }
+    a:hover { color: var(--accent-hover); }
+
+    /* Features grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .feature {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .feature .emoji { font-size: 28px; display: block; margin-bottom: 8px; }
+    .feature strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 15px; }
+    .feature span { color: var(--text-dim); font-size: 14px; line-height: 1.5; }
+
+    /* Install steps */
+    .install-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .install-block h3 { margin-top: 0; }
+    code, pre {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    code {
+      background: var(--bg-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+    pre {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--text);
+    }
+    .note {
+      background: rgba(251, 191, 36, 0.08);
+      border-left: 3px solid var(--warn);
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin: 12px 0;
+      color: var(--text-dim);
+    }
+    .note strong { color: var(--warn); }
+
+    /* How it works */
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 12px 0 12px 48px;
+      color: var(--text-dim);
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0; top: 12px;
+      width: 32px; height: 32px;
+      background: var(--accent);
+      color: #0a1f14;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+    footer a { margin: 0 8px; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 60px 24px 40px; }
+      .hero h1 { font-size: 36px; }
+      .hero .tagline { font-size: 17px; }
+      section { padding: 40px 0; }
+      section h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <img src="icon.png" alt="거북이경보 아이콘" class="icon" />
+    <h1>거북이경보</h1>
+    <p class="tagline">"어휴~ 거북이되겠다~"</p>
+    <p class="subtagline">macOS 메뉴바에서 주기적으로 자세 교정을 일러주는 잔소리형 알림 앱</p>
+    <div class="badges">
+      <span class="badge">macOS</span>
+      <span class="badge">Apple Silicon & Intel</span>
+      <span class="badge">오픈소스</span>
+      <span class="badge">무료</span>
+    </div>
+    <div class="downloads">
+      <a href="https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-arm64.dmg" class="btn btn-primary">
+        🍎 Apple Silicon 다운로드
+      </a>
+      <a href="https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-x64.dmg" class="btn btn-secondary">
+        💻 Intel Mac 다운로드
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="features">
+      <h2>🎯 이런 앱이에요</h2>
+      <p>하루 종일 모니터 들여다보고 있으면 어느새 거북이 자세가 되죠. 거북이경보는 <strong style="color:var(--text)">메뉴바에 조용히 상주</strong>하면서 정한 시간마다 스트레칭하라고 잔소리합니다.</p>
+      <div class="features">
+        <div class="feature">
+          <span class="emoji">🕐</span>
+          <strong>실시간 남은 시간</strong>
+          <span>메뉴바에 <code>🐢 29:59</code> 형태로 다음 알림까지 남은 시간 표시</span>
+        </div>
+        <div class="feature">
+          <span class="emoji">🚨</span>
+          <strong>네이티브 알림</strong>
+          <span>macOS 알림센터에 도달 + 랜덤 스트레칭 가이드 제공</span>
+        </div>
+        <div class="feature">
+          <span class="emoji">⚙️</span>
+          <strong>간격 조절</strong>
+          <span>15분 / 30분 / 45분 / 1시간 중 선택</span>
+        </div>
+        <div class="feature">
+          <span class="emoji">📊</span>
+          <strong>일일 카운트</strong>
+          <span>오늘 몇 번이나 스트레칭했는지 자동 집계</span>
+        </div>
+        <div class="feature">
+          <span class="emoji">💾</span>
+          <strong>설정 저장</strong>
+          <span>앱 재시작해도 간격 유지</span>
+        </div>
+        <div class="feature">
+          <span class="emoji">🪶</span>
+          <strong>가벼움</strong>
+          <span>창 없이 메뉴바 아이콘만. Dock도 차지하지 않음</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="install">
+      <h2>📦 설치하기</h2>
+
+      <div class="install-block">
+        <h3>✅ 방법 1. Homebrew (권장)</h3>
+        <p>터미널에 익숙하다면 <strong style="color:var(--text)">한 줄이면 끝</strong>. 칩셋 자동 인식 + Gatekeeper 우회까지 전부 처리됩니다.</p>
+        <pre><code>brew install --cask project-hh-com/turtle-alert/turtle-alert</code></pre>
+        <p style="font-size: 13px; opacity: 0.7;">제거: <code>brew uninstall --cask turtle-alert</code></p>
+      </div>
+
+      <div class="install-block">
+        <h3>📥 방법 2. DMG 직접 다운로드</h3>
+        <p>위에서 내 Mac 칩에 맞는 DMG를 받으세요. 터미널에서 <code>uname -m</code> 실행하면 칩을 알 수 있어요 (<code>arm64</code> = Apple Silicon, <code>x86_64</code> = Intel).</p>
+        <p>DMG를 더블클릭 → <strong style="color:var(--text)">거북이경보 아이콘을 Applications 폴더로 드래그</strong>하세요.</p>
+        <div class="note">
+          <strong>⚠️ 중요</strong> — Apple Developer ID로 서명되지 않아 Gatekeeper가 "손상되어 열 수 없습니다" 경고를 표시합니다. 아래 한 줄로 격리 속성을 제거하세요.
+          <pre style="margin-top: 10px; margin-bottom: 0;"><code>xattr -dr com.apple.quarantine /Applications/TurtleAlert.app</code></pre>
+        </div>
+        <p style="font-size: 13px; opacity: 0.7;">이후부터는 Finder 더블클릭으로 정상 실행됩니다.</p>
+      </div>
+    </section>
+
+    <section id="usage">
+      <h2>🚀 사용 방법</h2>
+      <ol class="steps">
+        <li>앱을 실행하면 <strong style="color:var(--text)">상단 메뉴바에 🐢 이모지</strong>가 등장합니다.</li>
+        <li>🐢 아이콘을 클릭하면 메뉴가 나타납니다.</li>
+        <li><strong style="color:var(--text)">"시작"</strong>을 누르면 타이머가 작동합니다.</li>
+        <li><strong style="color:var(--text)">"알림 간격"</strong> 서브메뉴에서 원하는 주기를 선택합니다.</li>
+        <li>설정한 시간마다 <strong style="color:var(--text)">🚨 거북이경보 발령!</strong> 알림과 함께 랜덤 스트레칭 가이드가 도착합니다.</li>
+      </ol>
+    </section>
+
+    <section id="links">
+      <h2>🔗 더 보기</h2>
+      <p>
+        이 프로젝트는 오픈소스입니다. 이슈나 건의는 언제든 환영합니다.
+      </p>
+      <div class="downloads" style="justify-content: flex-start;">
+        <a href="https://github.com/project-hh-com/turtle-alert" class="btn btn-secondary">GitHub 저장소</a>
+        <a href="https://github.com/project-hh-com/turtle-alert/issues" class="btn btn-secondary">이슈 / 건의</a>
+        <a href="https://github.com/project-hh-com/turtle-alert/releases" class="btn btn-secondary">릴리즈 기록</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Made with 🐢 for healthier necks ·
+      <a href="https://github.com/project-hh-com/turtle-alert">GitHub</a>
+    </p>
+  </footer>
+</body>
+</html>
