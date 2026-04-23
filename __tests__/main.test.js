@@ -437,13 +437,13 @@ describe("createAppCore", () => {
       expect(modeItem.submenu[1].label).toContain("AI 자세 검사");
     });
 
-    it("should show imagesnap 필요 when not available", () => {
+    it("should show 카메라 사용 불가 when not available", () => {
       core.setState({ imagesnapAvailable: false });
       core.updateTrayMenu();
       const template = mockMenu.buildFromTemplate.mock.calls.at(-1)[0];
       const modeItem = template.find((t) => t.label === "감시 모드");
       const aiOption = modeItem.submenu[1];
-      expect(aiOption.label).toContain("imagesnap 필요");
+      expect(aiOption.label).toContain("카메라 사용 불가");
       expect(aiOption.enabled).toBe(false);
     });
 
