@@ -8,8 +8,8 @@
 
 | 칩 | 바로 다운로드 |
 |---|---|
-| 🍎 Apple Silicon (M1/M2/M3/M4) | [거북이경보-AppleSilicon.dmg](https://github.com/project-hh-com/turtle-alert/releases/latest/download/%EA%B1%B0%EB%B6%81%EC%9D%B4%EA%B2%BD%EB%B3%B4-AppleSilicon.dmg) |
-| 💻 Intel Mac | [거북이경보-Intel.dmg](https://github.com/project-hh-com/turtle-alert/releases/latest/download/%EA%B1%B0%EB%B6%81%EC%9D%B4%EA%B2%BD%EB%B3%B4-Intel.dmg) |
+| 🍎 Apple Silicon (M1/M2/M3/M4) | [TurtleAlert-arm64.dmg](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-arm64.dmg) |
+| 💻 Intel Mac | [TurtleAlert-x64.dmg](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-x64.dmg) |
 
 📦 [전체 릴리즈 보기](https://github.com/project-hh-com/turtle-alert/releases/latest)
 
@@ -187,12 +187,16 @@ cp -R "dist/mac-arm64/TurtleAlert.app" /Applications/
 Spotlight(Cmd+Space)에서 **"거북이경보"** 검색 후 실행.
 
 ### GitHub Release 업로드
+
 ```bash
-gh release create vX.Y.Z \
-  "dist/TurtleAlert-X.Y.Z-arm64.dmg#거북이경보-AppleSilicon.dmg" \
-  "dist/TurtleAlert-X.Y.Z.dmg#거북이경보-Intel.dmg" \
-  --title "거북이경보 vX.Y.Z" --notes "릴리즈 노트"
+# 1) Release 생성
+gh release create vX.Y.Z --title "거북이경보 vX.Y.Z" --notes "릴리즈 노트"
+
+# 2) 빌드 + rename + 업로드 (자동)
+pnpm release
 ```
+
+`scripts/release.sh`가 DMG를 **버전 없는 이름**(`TurtleAlert-arm64.dmg`, `TurtleAlert-x64.dmg`)으로 업로드합니다. 이 덕분에 [DOWNLOAD.md](DOWNLOAD.md)의 `releases/latest/download/` 링크가 다음 릴리즈에서도 그대로 작동합니다. 자산명에 버전을 넣지 마세요 — 링크가 깨집니다.
 
 > 태그 푸시 시 CI가 자동으로 빌드 + 릴리즈합니다 (`.github/workflows/release.yml`).
 

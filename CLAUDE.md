@@ -90,14 +90,26 @@ npx electron-builder --mac --x64 --arm64 --publish never
 
 ⚠️ `productName`은 영문(`TurtleAlert`) 고정. 한글로 바꾸면 macOS 26.2+ 에서 SIGTRAP 크래시 (상세: [CRASH_INVESTIGATION.md](CRASH_INVESTIGATION.md)). 사용자에게 보이는 이름은 `extendInfo.CFBundleDisplayName` 로 한글 유지 중.
 
-### 5-3. GitHub Release 업로드
+### 5-3. GitHub Release 업로드 (자동 스크립트)
+
+**반드시 `scripts/release.sh` 사용** — 자산명을 버전 없는 형태로 고정해야 [DOWNLOAD.md](DOWNLOAD.md)의 `releases/latest/download/` 링크가 매 릴리즈마다 깨지지 않습니다.
+
 ```bash
-gh release create vX.Y.Z \
-  "dist/TurtleAlert-X.Y.Z-arm64.dmg#거북이경보-AppleSilicon.dmg" \
-  "dist/TurtleAlert-X.Y.Z.dmg#거북이경보-Intel.dmg" \
-  --title "거북이경보 vX.Y.Z" --notes "..."
+# 1) 먼저 GitHub Release를 생성 (notes 작성 필요)
+gh release create vX.Y.Z --title "거북이경보 vX.Y.Z" --notes "..."
+
+# 2) 빌드 + rename + 자산 업로드를 한 번에
+pnpm release           # package.json의 현재 버전을 사용
+# 또는
+pnpm release v0.6.0    # 특정 태그 명시
 ```
-(업로드 시 `#` 뒤의 이름으로 rename 되므로 사용자에게는 `거북이경보-*.dmg` 로 보임)
+
+스크립트가 하는 일:
+- `dist/` 정리 → `electron-builder --mac --x64 --arm64` 빌드
+- DMG를 **버전 없는 이름** (`TurtleAlert-arm64.dmg`, `TurtleAlert-x64.dmg`)으로 rename
+- 해당 태그의 GitHub Release에서 같은 이름의 기존 자산을 제거 후 새로 업로드
+
+⚠️ **금지 사항**: 자산명에 버전 포함 금지 (`TurtleAlert-0.5.0-arm64.dmg` ❌). 그렇게 올리면 DOWNLOAD.md 링크가 깨집니다. 수동으로 `gh release upload`를 쓸 일이 있다면 반드시 `#TurtleAlert-arm64.dmg` 형식으로 rename해서 올리세요.
 
 ### 5-4. 로컬 설치 (테스트용)
 ```bash

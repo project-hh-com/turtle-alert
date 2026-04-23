@@ -7,6 +7,7 @@
     "dev": "electron .",
     "build": "electron-builder --mac",
     "dist": "electron-builder --mac --publish never",
+    "release": "bash scripts/release.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
