@@ -186,19 +186,21 @@ cp -R "dist/mac-arm64/TurtleAlert.app" /Applications/
 
 Spotlight(Cmd+Space)에서 **"거북이경보"** 검색 후 실행.
 
-### GitHub Release 업로드
+### GitHub Release (권장: 한 줄)
 
 ```bash
-# 1) Release 생성
-gh release create vX.Y.Z --title "거북이경보 vX.Y.Z" --notes "릴리즈 노트"
-
-# 2) 빌드 + rename + 업로드 (자동)
-pnpm release
+pnpm release:tag patch    # 0.5.0 -> 0.5.1 (또는 minor / major / 0.6.0)
 ```
 
-`scripts/release.sh`가 DMG를 **버전 없는 이름**(`TurtleAlert-arm64.dmg`, `TurtleAlert-x64.dmg`)으로 업로드합니다. 이 덕분에 [DOWNLOAD.md](DOWNLOAD.md)의 `releases/latest/download/` 링크가 다음 릴리즈에서도 그대로 작동합니다. 자산명에 버전을 넣지 마세요 — 링크가 깨집니다.
+스크립트가 version bump → 커밋 → 태그 → push까지 처리하면, CI([release.yml](.github/workflows/release.yml))가 자동으로 빌드 + GitHub Release 생성 + 자산 업로드를 진행합니다.
 
-> 태그 푸시 시 CI가 자동으로 빌드 + 릴리즈합니다 (`.github/workflows/release.yml`).
+자산명은 `TurtleAlert-arm64.dmg`, `TurtleAlert-x64.dmg` (버전 없음)로 고정되어 [DOWNLOAD.md](DOWNLOAD.md)의 `releases/latest/download/` 링크가 다음 릴리즈에서도 그대로 작동합니다.
+
+**로컬 빌드/업로드 (디버깅용)**:
+```bash
+gh release create vX.Y.Z --title "거북이경보 vX.Y.Z" --notes "..."
+pnpm release    # 빌드 + rename + 업로드
+```
 
 ---
 
