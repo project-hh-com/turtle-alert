@@ -126,6 +126,17 @@ turtle-alert/
 
 ## 6. 개발 히스토리
 
+### v0.6.0 — AI 모델 로드 버그 수정 + Finder 한글 표시
+1. **AI 자세 검사 로드 실패 수정** — `@mediapipe/pose` 가 프로덕션 빌드에서 누락되어 트레이에서 AI 자세 검사를 켤 때 "TensorFlow.js 모델을 불러올 수 없습니다" 에러가 나던 문제 해결. 자세한 원인과 디버깅 과정은 [docs/2026-04-24-ai-posture-mediapipe.md](docs/2026-04-24-ai-posture-mediapipe.md) 참고
+2. **Finder 앱 이름 한글 표시** — macOS SIGTRAP 회피를 위해 번들명을 영문(`TurtleAlert`) 으로 두되, `CFBundleDisplayName` + `.lproj` 로컬라이제이션으로 Finder/Dock/메뉴바 표시를 `거북이경보` 한글로 복원
+
+### v0.5.x — 릴리즈 파이프라인 + imagesnap 번들
+1. **imagesnap 바이너리 번들** — 사용자가 `brew install imagesnap` 을 따로 하지 않아도 스냅샷/AI 기능 동작 (v0.5.1)
+2. **한 줄 릴리즈 자동화** — `pnpm release:tag` 스크립트로 버전 bump → 태그 push → CI 자동 빌드·배포 (v0.5.0)
+3. **고정 자산명** — 릴리즈 자산을 `TurtleAlert-arm64.dmg` / `TurtleAlert-x64.dmg` 로 고정하여 `releases/latest/download/` 영구 링크 보장
+4. **취약점 대응** — `@xmldom/xmldom` 을 ≥0.8.13 으로 pnpm override
+5. **UX 개선** — 감시 모드 분리(알림만 / AI 자세 검사), AI 감시 간격 선택(20초~5분), 스트레칭 27종 확대, 캘리브레이션 제거 후 절대 기준 전환
+
 ### v0.4.0 — 자세 감시 AI + 캘리브레이션
 1. **TensorFlow.js MoveNet** 기반 실시간 자세 분석 기능 추가
 2. **기준 자세 캘리브레이션** — 절대 임계값 → 본인 기준 편차 방식으로 전환
