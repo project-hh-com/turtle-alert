@@ -28,21 +28,16 @@
     "productName": "TurtleAlert",
     "afterPack": "scripts/afterPack.js",
     "mac": {
+      "target": "dmg",
       "category": "public.app-category.healthcare-fitness",
       "icon": "assets/icon.png",
       "identity": null,
       "extendInfo": {
         "CFBundleDisplayName": "거북이경보",
+        "CFBundleDevelopmentRegion": "ko",
         "NSCameraUsageDescription": "자세 스냅샷 촬영 및 AI 자세 감시를 위해 카메라 접근 권한이 필요합니다."
       }
     },
-    "files": [
-      "main.js",
-      "lib.js",
-      "lib/",
-      "assets/",
-      "node_modules/**/*"
-    ],
     "extraResources": [
       {
         "from": "vendor/imagesnap",
