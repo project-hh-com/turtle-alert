@@ -50,6 +50,7 @@ const {
   CONSECUTIVE_BAD_THRESHOLD,
 } = require("./lib/posture-detector");
 const { getImagesnapPath } = require("./lib/imagesnap-path");
+const { startUpdateChecker } = require("./lib/update-check");
 
 const SNAPSHOT_CONSECUTIVE_FAIL_LIMIT = 3;
 
@@ -175,10 +176,30 @@ function createAppCore(deps) {
   let postureDetectorReady = false;
   let postureDetectorLoading = false;
   let consecutiveBadCount = 0;
+  let availableUpdateTag = null;
+  let availableUpdateUrl = null;
 
   // 앱 시작 시 imagesnap 존재 여부 확인
   checkImagesnap().then((available) => {
     imagesnapAvailable = available;
+  });
+
+  // 업데이트 체커 시작 (새 버전 알림만, 자동 설치 X)
+  startUpdateChecker({
+    getCurrentVersion: () => app.getVersion(),
+    onUpdateAvailable: (tag) => {
+      const notification = new Notification({
+        title: `🆕 거북이경보 ${tag} 업데이트`,
+        body: "새 버전이 올라왔어요. 트레이 메뉴에서 받아보세요!",
+        silent: !store.get("soundEnabled"),
+      });
+      notification.show();
+    },
+    onCheck: (tag, url) => {
+      availableUpdateTag = tag;
+      availableUpdateUrl = url;
+      updateTrayMenu();
+    },
   });
 
   function sendAlert() {
@@ -308,7 +329,18 @@ function createAppCore(deps) {
     const soundEnabled = store.get("soundEnabled");
     const autoStart = store.get("autoStart");
 
+    const updateMenuItems = availableUpdateTag
+      ? [
+          {
+            label: `🆕 새 버전 ${availableUpdateTag} 받기`,
+            click: () => shell.openExternal(availableUpdateUrl),
+          },
+          { type: "separator" },
+        ]
+      : [];
+
     const contextMenu = Menu.buildFromTemplate([
+      ...updateMenuItems,
       {
         label: isRunning
           ? `⏱ ${formatTime(remainSec)} 남음 (${intervalMin}분 간격) — 메뉴를 다시 열면 갱신`

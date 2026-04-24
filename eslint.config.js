@@ -26,6 +26,8 @@ module.exports = [
         Math: "readonly",
         Buffer: "readonly",
         URL: "readonly",
+        fetch: "readonly",
+        AbortController: "readonly",
       },
     },
     rules: {
@@ -44,6 +46,7 @@ module.exports = [
         afterEach: "readonly",
         vi: "readonly",
         test: "readonly",
+        fetch: "readonly",
       },
     },
   },

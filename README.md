@@ -126,6 +126,11 @@ turtle-alert/
 
 ## 6. 개발 히스토리
 
+### v0.7.0 — 새 버전 알림 (업데이트 체커)
+1. **6시간마다 GitHub Releases 확인** — 새 버전이 올라오면 트레이 메뉴 최상단에 "🆕 새 버전 vX.Y.Z 받기" 항목이 추가되고, 같은 버전에 대해 한 번만 알림을 띄워 귀찮지 않게 유지
+2. **실패는 조용히** — 네트워크 오류 / rate limit 은 사용자에게 영향 없음
+3. **자동 설치 아님** — Apple Developer 서명이 없어 풀 자동 업데이트는 제약이 크므로, 클릭 한 번으로 릴리즈 페이지를 여는 반자동 방식만 도입
+
 ### v0.6.1 — AI 백엔드 초기화 추가 (v0.6.0 후속 픽스)
 1. **AI 자세 검사 백엔드 누락 해결** — v0.6.0 에서 `@mediapipe/pose` 는 추가했지만 실제로는 `@tensorflow/tfjs-backend-cpu` 도 빠져있어 `createDetector` 단계에서 "No backend found in registry" 로 실패하던 문제. 백엔드 패키지 추가 + `tf.setBackend('cpu')` / `tf.ready()` 명시 호출
 
