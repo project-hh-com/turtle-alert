@@ -14,6 +14,7 @@ const {
 const path = require("path");
 const Store = require("electron-store");
 const { createAppCore, cleanOldSnapshots } = require("./lib");
+const { startUpdateChecker } = require("./lib/update-check");
 
 process.on("uncaughtException", (error) => {
   try {
@@ -53,7 +54,15 @@ app.whenReady().then(() => {
     clearInvalidConfig: true,
   });
 
-  core = createAppCore({ Notification, Menu, app, store, systemPreferences, shell });
+  core = createAppCore({
+    Notification,
+    Menu,
+    app,
+    store,
+    systemPreferences,
+    shell,
+    startUpdateChecker,
+  });
 
   // 16x16 투명 PNG (유효한 이미지 버퍼) — 실제 표시는 setTitle의 이모지로
   // nativeImage.createEmpty()는 Electron 41+ macOS에서 CrBrowserMain 크래시 유발

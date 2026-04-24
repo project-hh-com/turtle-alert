@@ -50,7 +50,6 @@ const {
   CONSECUTIVE_BAD_THRESHOLD,
 } = require("./lib/posture-detector");
 const { getImagesnapPath } = require("./lib/imagesnap-path");
-const { startUpdateChecker } = require("./lib/update-check");
 
 const SNAPSHOT_CONSECUTIVE_FAIL_LIMIT = 3;
 
@@ -162,6 +161,9 @@ function resetDailyCount(store) {
  */
 function createAppCore(deps) {
   const { Notification, Menu, app, store, shell } = deps;
+  // 업데이트 체커는 명시 주입 필요 — 기본값은 no-op.
+  // 실제 앱에서는 main.js 가 startUpdateChecker 를 넘긴다. 테스트에서는 stub 주입하거나 생략.
+  const updateCheckerStarter = deps.startUpdateChecker || (() => () => {});
 
   let tray = null;
   let timer = null;
@@ -185,7 +187,7 @@ function createAppCore(deps) {
   });
 
   // 업데이트 체커 시작 (새 버전 알림만, 자동 설치 X)
-  startUpdateChecker({
+  updateCheckerStarter({
     getCurrentVersion: () => app.getVersion(),
     onUpdateAvailable: (tag) => {
       const notification = new Notification({
