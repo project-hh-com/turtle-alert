@@ -1,22 +1,30 @@
-# 2026-04-24 AI 자세 검사 모델 로드 실패 (v0.5.2 → v0.6.0)
+# 2026-04-24 AI 자세 검사 모델 로드 실패 (v0.5.2 → v0.6.0 → v0.6.1)
 
-> 설치된 `.app` 에서만 "TensorFlow.js 모델을 불러올 수 없습니다" 에러가 나던 이슈. `pnpm dev` 에서는 멀쩡. 원인은 `@mediapipe/pose` 가 프로덕션 `node_modules` 에 빠져있던 것.
+> 설치된 `.app` 에서만 "TensorFlow.js 모델을 불러올 수 없습니다" 에러가 나던 이슈. `pnpm dev` 에서는 멀쩡. 원인은 **두 가지**: ①`@mediapipe/pose` 패키지 누락 ②`@tensorflow/tfjs-backend-cpu` 백엔드 누락. v0.6.0 에서 ①만 고쳐 불완전했고, v0.6.1 에서 ②까지 해결.
 
 ---
 
 ## 결론
 
-**원인**: `@tensorflow-models/pose-detection` v2.1.3 은 `blazepose_mediapipe/detector.js` 에서 **무조건적으로** `require("@mediapipe/pose")` 를 호출함. 우리가 실제로 쓰는 디텍터는 MoveNet 이지만, `index.js` 가 BlazePose 모듈을 **정적으로** import 하기 때문에 `require` 시점에 `@mediapipe/pose` 가 해석되지 않으면 모듈 전체 로드가 실패함.
+**원인 1 (v0.6.0 에서 해결)**: `@tensorflow-models/pose-detection` v2.1.3 은 `blazepose_mediapipe/detector.js` 에서 **무조건적으로** `require("@mediapipe/pose")` 를 호출함. 우리가 실제로 쓰는 디텍터는 MoveNet 이지만, `index.js` 가 BlazePose 모듈을 **정적으로** import 하기 때문에 `require` 시점에 `@mediapipe/pose` 가 해석되지 않으면 모듈 전체 로드가 실패함.
 
-`package.json` 에는 `@mediapipe/pose` 가 선언돼 있지 않았음. `pnpm dev` 에서는 과거 설치 흔적 또는 pnpm 의 호이스팅으로 우연히 해결됐지만, electron-builder 가 프로덕션 의존성만 골라 패키징하는 과정에서 누락됨.
+**원인 2 (v0.6.1 에서 해결)**: `pose-detection` 의 PoseNet 경로가 `@tensorflow/tfjs-backend-webgpu` 를 require 하고, 메타패키지 `@tensorflow/tfjs` 가 Node 환경에서 자동으로 CPU 백엔드를 등록해주지 않아 `createDetector` 가 "No backend found in registry" 로 실패. 백엔드 패키지를 직접 추가하고 `tf.setBackend('cpu')` 를 명시 호출해야 함.
 
-**해결**: `@mediapipe/pose` 를 `dependencies` 에 추가.
+**해결**: 두 패키지를 `dependencies` 에 추가하고 `initDetector` 진입부에 백엔드를 명시.
 
 ```json
 "dependencies": {
   "@mediapipe/pose": "^0.5.1675469404",
+  "@tensorflow/tfjs-backend-cpu": "^4.22.0",
   ...
 }
+```
+
+```js
+tf = require("@tensorflow/tfjs");
+require("@tensorflow/tfjs-backend-cpu");
+await tf.setBackend("cpu");
+await tf.ready();
 ```
 
 ---
@@ -78,16 +86,20 @@ Require stack:
 
 5. **electron-builder 의 `files` 필드는 함부로 건드리지 말 것.** 기본 동작이 `node_modules` 의 dependencies 를 알아서 포함하는데, 명시하는 순간 동작이 바뀜. 이번 이슈와 별개였지만 디버깅을 오래 헤매게 한 요소.
 
+6. **"한 번 고쳤다"고 끝이 아니다 (v0.6.0 교훈).** `@mediapipe/pose` 추가만으로 require 체인 한 곳이 뚫렸지만, 그 뒤에 백엔드 초기화 실패가 대기하고 있었음. 실제 `createDetector()` 까지 성공하는지 — 프로덕션 동등 환경에서 — 반드시 검증하고 릴리즈할 것. 이번에는 **asar 추출 후 `cd dist && node -e "..."` 로 require 체인 전체를 돌려보는 방식**이 결정적이었음.
+
 ---
 
 ## 관련 커밋 / 파일
 
-- `fix: AI 자세 검사 모델 로드 실패 수정` — `0728371`
-- [package.json](../package.json) — `@mediapipe/pose` 추가
-- [lib/posture-capture.js](../lib/posture-capture.js) — `initDetector` (변경 없음, catch 블록 구조만 원상 복구)
+- v0.6.0: `fix: AI 자세 검사 모델 로드 실패 수정` — `@mediapipe/pose` 추가
+- v0.6.1: `fix: tfjs CPU 백엔드 초기화 추가` — `@tensorflow/tfjs-backend-cpu` + `tf.setBackend('cpu')` 명시
+- [package.json](../package.json)
+- [lib/posture-capture.js](../lib/posture-capture.js) — `initDetector`
 
 ## 다음에 비슷한 증상이 또 나오면
 
 1. 먼저 **진짜 에러를 확보**하라. `initDetector` 의 catch 는 `err.message` 만 찍고 스택을 버리게 되어있음. 스택까지 봐야 함.
-2. dev vs prod 차이 → `pnpm install --prod` 후 `node -e "require('문제모듈')"` 로 프로덕션 동등 환경 재현.
+2. dev vs prod 차이 → 설치된 `.app` 의 `app.asar` 를 추출한 뒤 그 폴더에서 직접 `node -e "require('문제모듈')"` 로 재현. `pnpm install --prod` 보다 정확함.
 3. `Cannot find module` 이면 99% 숨은 peer dep. `package.json` 에 추가.
+4. `No backend found in registry` / `Kernel 'X' not registered` 계열은 tfjs 백엔드 누락. CPU 백엔드를 require 하고 `tf.setBackend('cpu'); await tf.ready()` 명시.
