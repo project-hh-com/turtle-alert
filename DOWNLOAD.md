@@ -26,8 +26,8 @@ brew uninstall --cask --zap turtle-alert  # 설정/로그까지 전부 삭제
 
 | 파일 | 크기 | 대상 |
 |---|---|---|
-| 🍎 [**Apple Silicon**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-arm64.dmg) | 162MB | M1/M2/M3/M4 |
-| 💻 [**Intel**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-x64.dmg) | 167MB | Intel Mac |
+| 🍎 [**Apple Silicon**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-arm64.dmg) | ~200MB | M1/M2/M3/M4 |
+| 💻 [**Intel**](https://github.com/project-hh-com/turtle-alert/releases/latest/download/TurtleAlert-x64.dmg) | ~205MB | Intel Mac |
 
 터미널에서 내 칩 확인:
 ```bash
@@ -64,6 +64,18 @@ xattr -dr com.apple.quarantine /Applications/TurtleAlert.app
 | 🔔 **macOS 네이티브 알림** | 알림 센터에서 확인 가능 |
 | 📊 **일일 카운트** | 오늘 스트레칭 완료 횟수 자동 집계 |
 | 💾 **설정 영구 저장** | 앱 재시작해도 간격 유지 |
+
+---
+
+## 🔄 새 버전이 나오면
+
+**v0.7.0 부터** 앱이 6시간마다 최신 버전을 확인합니다. 새 버전이 올라오면:
+
+1. 알림이 한 번 뜹니다 — *"🆕 거북이경보 vX.Y.Z 업데이트"*
+2. 트레이 메뉴 맨 위에 **"🆕 새 버전 vX.Y.Z 받기"** 항목이 추가됩니다
+3. 항목을 클릭하면 릴리즈 페이지가 열리고, 거기서 새 DMG 를 받아 다시 설치하세요
+
+> 자동 설치는 지원하지 않습니다 (코드 서명이 없어 macOS 가 차단). 위 안내대로 DMG 를 다시 받는 방식이 가장 안전합니다. Homebrew 로 설치한 경우에는 `brew upgrade --cask turtle-alert` 로 업데이트하시면 됩니다.
 
 ---
 
