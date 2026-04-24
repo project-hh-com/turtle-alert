@@ -4,7 +4,7 @@ const {
   parseSemver,
   isNewer,
   fetchLatestRelease,
-  startUpdateChecker,
+  checkForUpdateOnce,
 } = await import("../lib/update-check.js");
 
 describe("parseSemver", () => {
@@ -105,18 +105,16 @@ describe("fetchLatestRelease", () => {
   });
 });
 
-describe("startUpdateChecker", () => {
+describe("checkForUpdateOnce", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     vi.stubGlobal("fetch", vi.fn());
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
-  it("should call onUpdateAvailable once when new version is found", async () => {
+  it("should call onUpdateAvailable when new version is found", async () => {
     fetch.mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -128,19 +126,15 @@ describe("startUpdateChecker", () => {
     const onUpdateAvailable = vi.fn();
     const onCheck = vi.fn();
 
-    const stop = startUpdateChecker({
+    await checkForUpdateOnce({
       getCurrentVersion: () => "0.6.0",
       onUpdateAvailable,
       onCheck,
     });
 
-    await vi.waitFor(() => {
-      expect(onCheck).toHaveBeenCalledWith("v1.0.0", "https://example.com/r");
-    });
+    expect(onCheck).toHaveBeenCalledWith("v1.0.0", "https://example.com/r");
     expect(onUpdateAvailable).toHaveBeenCalledWith("v1.0.0", "https://example.com/r");
     expect(onUpdateAvailable).toHaveBeenCalledTimes(1);
-
-    stop();
   });
 
   it("should not call onUpdateAvailable when current is up to date", async () => {
@@ -152,35 +146,26 @@ describe("startUpdateChecker", () => {
     const onUpdateAvailable = vi.fn();
     const onCheck = vi.fn();
 
-    const stop = startUpdateChecker({
+    await checkForUpdateOnce({
       getCurrentVersion: () => "0.6.0",
       onUpdateAvailable,
       onCheck,
     });
 
-    await vi.waitFor(() => {
-      expect(onCheck).toHaveBeenCalled();
-    });
     expect(onCheck).toHaveBeenCalledWith(null, null);
     expect(onUpdateAvailable).not.toHaveBeenCalled();
-
-    stop();
   });
 
   it("should pass null to onCheck when fetch fails", async () => {
     fetch.mockRejectedValue(new Error("oops"));
 
     const onCheck = vi.fn();
-    const stop = startUpdateChecker({
+    await checkForUpdateOnce({
       getCurrentVersion: () => "0.6.0",
       onUpdateAvailable: vi.fn(),
       onCheck,
     });
 
-    await vi.waitFor(() => {
-      expect(onCheck).toHaveBeenCalledWith(null, null);
-    });
-
-    stop();
+    expect(onCheck).toHaveBeenCalledWith(null, null);
   });
 });

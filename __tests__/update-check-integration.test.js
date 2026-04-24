@@ -1,13 +1,13 @@
 /**
- * createAppCore 내부의 업데이트 체커 연동(알림 콜백, onCheck 콜백, 트레이 메뉴 항목)
- * 분기를 커버하기 위한 통합 테스트. startUpdateChecker 를 deps 로 주입받아
- * 넘어온 콜백을 직접 꺼내 호출한다 — 실제 네트워크나 타이머에 의존하지 않는다.
+ * createAppCore 내부의 업데이트 확인 연동(알림 콜백, onCheck 콜백, 트레이 메뉴 항목)
+ * 분기를 커버하기 위한 통합 테스트. checkForUpdateOnce 를 deps 로 주입받아
+ * 넘어온 콜백을 직접 꺼내 호출한다 — 실제 네트워크에 의존하지 않는다.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const { createAppCore } = await import("../lib.js");
 
-describe("createAppCore — update checker wiring", () => {
+describe("createAppCore — update check wiring", () => {
   let core;
   let mockNotification;
   let mockMenu;
@@ -56,9 +56,8 @@ describe("createAppCore — update checker wiring", () => {
     };
     mockTray = { setTitle: vi.fn(), setContextMenu: vi.fn() };
 
-    const stubStartUpdateChecker = vi.fn((opts) => {
+    const stubCheckForUpdateOnce = vi.fn(async (opts) => {
       capturedOptions = opts;
-      return () => {};
     });
 
     core = createAppCore({
@@ -67,7 +66,7 @@ describe("createAppCore — update checker wiring", () => {
       app: mockApp,
       store: mockStore,
       shell: mockShell,
-      startUpdateChecker: stubStartUpdateChecker,
+      checkForUpdateOnce: stubCheckForUpdateOnce,
     });
     core.setState({ tray: mockTray });
   });
@@ -79,7 +78,7 @@ describe("createAppCore — update checker wiring", () => {
     vi.useRealTimers();
   });
 
-  it("should register a checker with getCurrentVersion delegating to app.getVersion", () => {
+  it("should invoke checkForUpdateOnce with getCurrentVersion delegating to app.getVersion", () => {
     expect(capturedOptions).toBeDefined();
     expect(capturedOptions.getCurrentVersion()).toBe("0.7.0");
     expect(mockApp.getVersion).toHaveBeenCalled();

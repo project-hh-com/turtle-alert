@@ -161,9 +161,9 @@ function resetDailyCount(store) {
  */
 function createAppCore(deps) {
   const { Notification, Menu, app, store, shell } = deps;
-  // 업데이트 체커는 명시 주입 필요 — 기본값은 no-op.
-  // 실제 앱에서는 main.js 가 startUpdateChecker 를 넘긴다. 테스트에서는 stub 주입하거나 생략.
-  const updateCheckerStarter = deps.startUpdateChecker || (() => () => {});
+  // 업데이트 체크는 명시 주입 필요 — 기본값은 no-op.
+  // 실제 앱에서는 main.js 가 checkForUpdateOnce 를 넘긴다. 테스트에서는 stub 주입하거나 생략.
+  const checkForUpdate = deps.checkForUpdateOnce || (() => Promise.resolve());
 
   let tray = null;
   let timer = null;
@@ -186,8 +186,8 @@ function createAppCore(deps) {
     imagesnapAvailable = available;
   });
 
-  // 업데이트 체커 시작 (새 버전 알림만, 자동 설치 X)
-  updateCheckerStarter({
+  // 앱 시작 시 1회 버전 확인 (새 버전 알림만, 자동 설치 X)
+  checkForUpdate({
     getCurrentVersion: () => app.getVersion(),
     onUpdateAvailable: (tag) => {
       const notification = new Notification({
