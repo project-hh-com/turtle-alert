@@ -14,7 +14,7 @@ const {
 const path = require("path");
 const Store = require("electron-store");
 const { createAppCore, cleanOldSnapshots } = require("./lib");
-const { startUpdateChecker } = require("./lib/update-check");
+const { checkForUpdateOnce } = require("./lib/update-check");
 
 process.on("uncaughtException", (error) => {
   try {
@@ -61,7 +61,7 @@ app.whenReady().then(() => {
     store,
     systemPreferences,
     shell,
-    startUpdateChecker,
+    checkForUpdateOnce,
   });
 
   // 16x16 투명 PNG (유효한 이미지 버퍼) — 실제 표시는 setTitle의 이모지로
